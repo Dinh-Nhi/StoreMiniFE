@@ -1,28 +1,34 @@
 // src/layouts/MainLayout.tsx
 import { Outlet } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../shared/components/Navbar";
 import Footer from "../shared/components/Footer";
 import BackToTop from "../shared/components/BackToTop";
+import { StoreInfoContext } from "../context/StoreInfoContext";
+import { getStoreInfo } from "../helper/api";
+import type { StoreInfoEntity } from "../types";
 
 export default function MainLayout() {
+  const [storeInfo, setStoreInfo] = useState<StoreInfoEntity[]>([]);
+
   useEffect(() => {
-    // Hide spinner when page loads
-    const spinner = document.getElementById('spinner');
+    getStoreInfo().then((res) => setStoreInfo(res.data));
+
+    const spinner = document.getElementById("spinner");
     if (spinner) {
-      spinner.classList.remove('show');
-      spinner.classList.add('hide');
+      spinner.classList.remove("show");
+      spinner.classList.add("hide");
     }
   }, []);
 
   return (
-    <>
+    <StoreInfoContext.Provider value={storeInfo}>
       <Navbar />
-      <main style={{ paddingTop: '160px' }}>
+      <main style={{ paddingTop: "160px" }}>
         <Outlet />
       </main>
       <Footer />
       <BackToTop />
-    </>
+    </StoreInfoContext.Provider>
   );
 }
