@@ -193,6 +193,6 @@ export default function Home() {
 
       {/* Testimonial Section */}
       <TestimonialSection />
-    </>
-  );
-}
+      </>
+    );
+  }

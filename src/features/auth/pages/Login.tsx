@@ -33,36 +33,35 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-96">
-        <h2 className="text-xl font-bold mb-4">Login</h2>
-
-        <input
-          required
-          type="email"
-          placeholder="Email"
-          className="w-full mb-3 p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          required
-          type="password"
-          placeholder="Password"
-          className="w-full mb-3 p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          {loading ? "Loading..." : "Login"}
-        </button>
-      </form>
+    <div className="container py-1">
+    <div className="row justify-content-center">
+      <div className="col-md-6 col-lg-5">
+        <div className="bg-light p-5 rounded shadow">
+          <h3 className="text-center mb-4 text-primary">Đăng nhập</h3>
+          <form>
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label fw-bold">Tên đăng nhập</label>
+              <input type="email" id="email" className="form-control p-3" placeholder="Nhập tên đăng nhập" required />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label fw-bold">Mật khẩu</label>
+              <input type="password" id="password" className="form-control p-3" placeholder="Nhập mật khẩu" required />
+            </div>
+            <div className="d-flex justify-content-between mb-3">
+              {/* <div>
+                <input type="checkbox" id="remember" />
+                <label htmlFor="remember"> Ghi nhớ tôi</label>
+              </div> */}
+              <a href="#" className="text-primary">Quên mật khẩu?</a>
+            </div>
+            <button type="submit" className="btn btn-primary w-100 py-3 rounded-pill">Đăng nhập</button>
+          </form>
+          <p className="text-center mt-3 mb-0">Không có tài khoản?
+            <a href="register" className="text-primary fw-bold">Đăng ký tại đây</a>
+          </p>
+        </div>
+      </div>
     </div>
+  </div>
   );
 }
