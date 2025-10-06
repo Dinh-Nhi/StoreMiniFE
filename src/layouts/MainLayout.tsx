@@ -24,7 +24,7 @@ export default function MainLayout() {
   return (
     <StoreInfoContext.Provider value={storeInfo}>
       <Navbar />
-      <main style={{ paddingTop: "160px" }}>
+      <main>
         <Outlet />
       </main>
       <Footer />

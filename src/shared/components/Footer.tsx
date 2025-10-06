@@ -1,16 +1,8 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useStoreInfo } from "../../context/StoreInfoContext";
 
 export default function Footer() {
-  const [email, setEmail] = useState("");
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      alert("Thank you for subscribing!");
-      setEmail("");
-    }
-  };
+  const storeInfo = useStoreInfo();
 
   return (
     <>
@@ -23,31 +15,12 @@ export default function Footer() {
             <div className="row g-4">
               <div className="col-lg-3">
                 <Link to="/">
-                  <h1 className="text-primary mb-0">Fruitables</h1>
-                  <p className="text-secondary mb-0">Fresh products</p>
+                  <h1 className="text-primary mb-0">
+                    {storeInfo.find((item) => item.code === "LOGO")?.name}
+                  </h1>
                 </Link>
               </div>
-              <div className="col-lg-6">
-                <form
-                  onSubmit={handleSubscribe}
-                  className="position-relative mx-auto"
-                >
-                  <input
-                    className="form-control border-0 w-100 py-3 px-4 rounded-pill"
-                    type="email"
-                    placeholder="Your Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <button
-                    type="submit"
-                    className="btn btn-primary border-0 border-secondary py-3 px-4 position-absolute rounded-pill text-white"
-                    style={{ top: 0, right: 0 }}
-                  >
-                    Subscribe Now
-                  </button>
-                </form>
-              </div>
+              <div className="col-lg-6"></div>
               <div className="col-lg-3">
                 <div className="d-flex justify-content-end pt-3">
                   <a
@@ -81,107 +54,83 @@ export default function Footer() {
           <div className="row g-5">
             <div className="col-lg-3 col-md-6">
               <div className="footer-item">
-                <h4 className="text-light mb-3">Why People Like us!</h4>
-                <p className="mb-4">
-                  typesetting, remaining essentially unchanged. It was
-                  popularised in the 1960s with the like Aldus PageMaker
-                  including of Lorem Ipsum.
-                </p>
-                <a
-                  href="#"
-                  className="btn border-secondary py-2 px-4 rounded-pill text-primary"
-                >
-                  Read More
-                </a>
+                <h4 className="text-light mb-3">
+                  {storeInfo.find((item) => item.code === "MENU1")?.name}
+                </h4>
+                {storeInfo
+                  .filter((item) => item.parentCode === "MENU1")
+                  .sort((a, b) => a.sort - b.sort)
+                  .map((menu) => (
+                    <a
+                      key={menu.id}
+                      href={menu.link || "#"}
+                      className="btn-link"
+                    >
+                      {menu.name}
+                    </a>
+                  ))}
               </div>
             </div>
             <div className="col-lg-3 col-md-6">
               <div className="d-flex flex-column text-start footer-item">
-                <h4 className="text-light mb-3">Shop Info</h4>
-                <a href="#" className="btn-link">
-                  About Us
-                </a>
-                <Link to="/contact" className="btn-link">
-                  Contact Us
-                </Link>
-                <a href="#" className="btn-link">
-                  Privacy Policy
-                </a>
-                <a href="#" className="btn-link">
-                  Terms & Condition
-                </a>
-                <a href="#" className="btn-link">
-                  Return Policy
-                </a>
-                <a href="#" className="btn-link">
-                  FAQs & Help
-                </a>
+                <h4 className="text-light mb-3">
+                  {storeInfo.find((item) => item.code === "MENU2")?.name}
+                </h4>
+                {storeInfo
+                  .filter((item) => item.parentCode === "MENU2")
+                  .sort((a, b) => a.sort - b.sort)
+                  .map((menu) => (
+                    <a
+                      key={menu.id}
+                      href={menu.link || "#"}
+                      className="btn-link"
+                    >
+                      {menu.name}
+                    </a>
+                  ))}
               </div>
             </div>
             <div className="col-lg-3 col-md-6">
               <div className="d-flex flex-column text-start footer-item">
-                <h4 className="text-light mb-3">Account</h4>
-                <Link to="/login" className="btn-link">
-                  My Account
-                </Link>
-                <Link to="/products" className="btn-link">
-                  Shop details
-                </Link>
-                <Link to="/cart" className="btn-link">
-                  Shopping Cart
-                </Link>
-                <a href="#" className="btn-link">
-                  Wishlist
-                </a>
-                <a href="#" className="btn-link">
-                  Order History
-                </a>
-                <a href="#" className="btn-link">
-                  International Orders
-                </a>
+                <h4 className="text-light mb-3">
+                  {storeInfo.find((item) => item.code === "MENU3")?.name}
+                </h4>
+                {storeInfo
+                  .filter((item) => item.parentCode === "MENU3")
+                  .sort((a, b) => a.sort - b.sort)
+                  .map((menu) => (
+                    <a
+                      key={menu.id}
+                      href={menu.link || "#"}
+                      className="btn-link"
+                    >
+                      {menu.name}
+                    </a>
+                  ))}
               </div>
             </div>
             <div className="col-lg-3 col-md-6">
               <div className="footer-item">
-                <h4 className="text-light mb-3">Contact</h4>
-                <p>Address: 1429 Netus Rd, NY 48247</p>
-                <p>Email: Example@gmail.com</p>
-                <p>Phone: +0123 4567 8910</p>
-                <p>Payment Accepted</p>
-                <img
-                  src="/placeholder.png"
-                  className="img-fluid"
-                  alt="Payment methods"
-                />
+                <h4 className="text-light mb-3">
+                  {storeInfo.find((item) => item.code === "MENU4")?.name}
+                </h4>
+                {storeInfo
+                  .filter((item) => item.parentCode === "MENU4")
+                  .sort((a, b) => a.sort - b.sort)
+                  .map((menu) => (
+                    <a
+                      key={menu.id}
+                      href={menu.link || "#"}
+                      className="btn-link"
+                    >
+                      {menu.name}
+                    </a>
+                  ))}
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Copyright Start */}
-      <div className="container-fluid copyright bg-dark py-4">
-        <div className="container">
-          <div className="row">
-            <div className="col-md-6 text-center text-md-start mb-3 mb-md-0">
-              <span className="text-light">
-                <Link to="/">
-                  <i className="fas fa-copyright text-light me-2"></i>Your Site
-                  Name
-                </Link>
-                , All right reserved.
-              </span>
-            </div>
-            <div className="col-md-6 my-auto text-center text-md-end text-white">
-              Designed By{" "}
-              <a className="border-bottom" href="https://htmlcodex.com">
-                HTML Codex
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* Copyright End */}
     </>
   );
 }

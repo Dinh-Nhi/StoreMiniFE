@@ -7,8 +7,6 @@ import { useStoreInfo } from "../../context/StoreInfoContext";
 
 export default function Navbar() {
   const storeInfo = useStoreInfo();
-  console.log(storeInfo);
-
   const cartCount = useSelector((state: RootState) => state.cart.items.length);
 
   return (
@@ -46,7 +44,9 @@ export default function Navbar() {
         <div className="container px-0">
           <nav className="navbar navbar-light bg-white navbar-expand-xl">
             <Link to="/" className="navbar-brand">
-              <h1 className="text-primary display-6">Fruitables</h1>
+              <h1 className="text-primary display-6">
+                {storeInfo.find((item) => item.code === "LOGO")?.name}
+              </h1>
             </Link>
             <button
               className="navbar-toggler py-2 px-3"
@@ -61,35 +61,18 @@ export default function Navbar() {
               id="navbarCollapse"
             >
               <div className="navbar-nav mx-auto">
-                <Link to="/" className="nav-item nav-link active">
-                  Home
-                </Link>
-                <Link to="/products" className="nav-item nav-link">
-                  Shop
-                </Link>
-                <div className="nav-item dropdown">
-                  <a
-                    href="#"
-                    className="nav-link dropdown-toggle"
-                    data-bs-toggle="dropdown"
-                  >
-                    Pages
-                  </a>
-                  <div className="dropdown-menu m-0 bg-secondary rounded-0">
-                    <Link to="/cart" className="dropdown-item">
-                      Cart
+                {storeInfo
+                  .filter((item) => item.parentCode === "MENU")
+                  .sort((a, b) => a.sort - b.sort)
+                  .map((menu) => (
+                    <Link
+                      key={menu.id}
+                      to={menu.link || "#"}
+                      className="nav-item nav-link"
+                    >
+                      {menu.name}
                     </Link>
-                    <Link to="/checkout" className="dropdown-item">
-                      Checkout
-                    </Link>
-                    <Link to="/testimonial" className="dropdown-item">
-                      Testimonial
-                    </Link>
-                    <Link to="/404" className="dropdown-item">
-                      404 Page
-                    </Link>
-                  </div>
-                </div>
+                  ))}
                 <Link to="/contact" className="nav-item nav-link">
                   Contact
                 </Link>
@@ -124,8 +107,6 @@ export default function Navbar() {
           </nav>
         </div>
       </div>
-
-      {/* Search Modal */}
       <SearchModal />
     </>
   );
