@@ -1,17 +1,26 @@
-// src/shared/components/Navbar.tsx
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { type RootState } from "../../store";
 import SearchModal from "./SearchModal";
 import { useStoreInfo } from "../../context/StoreInfoContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Navbar() {
   const storeInfo = useStoreInfo();
   const cartCount = useSelector((state: RootState) => state.cart.items.length);
+  const navigate = useNavigate();
+
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <>
       <div className="container-fluid fixed-top">
+        {/* --- Topbar --- */}
         <div className="container topbar bg-primary d-none d-lg-block">
           <div className="d-flex justify-content-between">
             <div className="top-info ps-2">
@@ -41,6 +50,8 @@ export default function Navbar() {
             </div>
           </div>
         </div>
+
+        {/* --- Navbar --- */}
         <div className="container px-0">
           <nav className="navbar navbar-light bg-white navbar-expand-xl">
             <Link to="/" className="navbar-brand">
@@ -56,10 +67,8 @@ export default function Navbar() {
             >
               <span className="fa fa-bars text-primary"></span>
             </button>
-            <div
-              className="collapse navbar-collapse bg-white"
-              id="navbarCollapse"
-            >
+
+            <div className="collapse navbar-collapse bg-white" id="navbarCollapse">
               <div className="navbar-nav mx-auto">
                 {storeInfo
                   .filter((item) => item.parentCode === "MENU")
@@ -77,7 +86,9 @@ export default function Navbar() {
                   Contact
                 </Link>
               </div>
-              <div className="d-flex m-3 me-0">
+
+              {/* --- User / Cart / Search --- */}
+              <div className="d-flex m-3 me-0 align-items-center">
                 <button
                   className="btn-search btn border border-secondary btn-md-square rounded-circle bg-white me-4"
                   data-bs-toggle="modal"
@@ -85,6 +96,7 @@ export default function Navbar() {
                 >
                   <i className="fas fa-search text-primary"></i>
                 </button>
+
                 <Link to="/cart" className="position-relative me-4 my-auto">
                   <i className="fa fa-shopping-bag fa-2x"></i>
                   <span
@@ -99,14 +111,31 @@ export default function Navbar() {
                     {cartCount}
                   </span>
                 </Link>
-                <Link to="/login" className="my-auto">
-                  <i className="fas fa-user fa-2x"></i>
-                </Link>
+
+                {/* 🔹 Hiển thị user từ context */}
+                {user ? (
+                  <div className="d-flex align-items-center">
+                    <span className="me-3 fw-bold text-primary">
+                      {user.fullName || user.userName || user.email}
+                    </span>
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={handleLogout}
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                ) : (
+                  <Link to="/login" className="my-auto">
+                    <i className="fas fa-user fa-2x"></i>
+                  </Link>
+                )}
               </div>
             </div>
           </nav>
         </div>
       </div>
+
       <SearchModal />
     </>
   );

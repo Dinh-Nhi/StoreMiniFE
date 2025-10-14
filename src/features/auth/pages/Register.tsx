@@ -1,37 +1,63 @@
-// src/features/auth/pages/Register.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../../shared/utils/api";
+import { register as registerApi, login as loginApi } from "../../../helper/api";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function Register() {
-  const [fullname, setFullname] = useState("");
-  const [username, setUsername] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");   
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();   
+  const navigate = useNavigate();
+  const { login: loginAuth } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+   
+
+    if (!userName || !password || !confirmPassword) {
+      alert("Vui lòng nhập đầy đủ thông tin!");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Mật khẩu xác nhận không khớp!");
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await api.post("/auth/register", { email, password });
-      // backend nên trả { accessToken, user }
-      const token = res.data?.accessToken ?? res.data?.token ?? null;
-      if (token) {
-        localStorage.setItem("token", token);
-        // nếu muốn config axios để gửi token tự động, add interceptor nơi api.ts
-        alert("Đăng nhập thành công");
-        navigate("/");
+      const res = await registerApi({ userName, password, email, fullName, phone, address });
+
+      if (res.data?.code === 2000) {
+        alert("Đăng ký thành công! Hệ thống đang đăng nhập...");
+
+        const loginRes = await loginApi({ userName, password });
+
+        if (loginRes.data?.code === 2000) {
+          const token = loginRes.data.data;
+          if (token) {
+            localStorage.setItem("token", token);
+            loginAuth(token);
+
+            alert("Đăng nhập thành công!");
+            navigate("/");
+          } else {
+            alert("Không nhận được token từ server!");
+          }
+        } else {
+          alert(loginRes.data?.message || "Đăng nhập thất bại!");
+        }
       } else {
-        alert("Login failed: no token returned");
+        alert(res.data?.message || "Đăng ký thất bại!");
       }
     } catch (err: any) {
-      console.error(err);
-      alert(err?.response?.data?.message ?? "Login failed");
+      console.error("Register error:", err);
+      alert(err.response?.data?.message || "Có lỗi xảy ra khi đăng ký!");
     } finally {
       setLoading(false);
     }
@@ -39,53 +65,103 @@ export default function Register() {
 
   return (
     <div className="container py-1">
-    <div className="row justify-content-center">
-      <div className="col-md-6 col-lg-5">
-        <div className="bg-light p-5 rounded shadow">
-          <h3 className="text-center mb-4 text-primary">Đăng ký</h3>
-          <form>
-            <div className="mb-3">
-              <label htmlFor="fullname" className="form-label fw-bold">Họ và tên</label>
-              <input type="text" id="fullname" className="form-control p-3" placeholder="Nhập họ và tên" required />
-            </div>
-            <div className="mb-3">
-              <label htmlFor="username" className="form-label fw-bold">Tên đăng nhập</label>
-              <input type="username" id="username" className="form-control p-3" placeholder="Nhập tên đăng nhập" required />
-            </div>
-            <div className="mb-3">
-              <label htmlFor="email" className="form-label fw-bold">Email</label>
-              <input type="email" id="email" className="form-control p-3" placeholder="Nhập email" required />
-            </div>
-            <div className="mb-3">
-              <label htmlFor="phone" className="form-label fw-bold">Số điện thoại</label>
-              <input type="phone" id="phone" className="form-control p-3" placeholder="Nhập số điện thoại" required />
-            </div>
-            <div className="mb-3">
-              <label htmlFor="address" className="form-label fw-bold">Địa chỉ</label>
-              <input type="address" id="address" className="form-control p-3" placeholder="Nhập địa chỉ" required />
-            </div>
-            <div className="mb-3">
-              <label htmlFor="password" className="form-label fw-bold">Mật khẩu</label>
-              <input type="password" id="password" className="form-control p-3" placeholder="Nhập mật khẩu" required />
-            </div>
-            <div className="mb-3">
-              <label htmlFor="confirmPassword" className="form-label fw-bold">Xác nhận mật khẩu</label>
-              <input type="password" id="confirmPassword" className="form-control p-3" placeholder="Nhập lại mật khẩu" required />
-            </div>
-            {/* <div className="d-flex justify-content-between mb-3">
-              <div>
-                <input type="checkbox" id="remember" />
-                <label htmlFor="remember"> Ghi nhớ tôi</label>
+      <div className="row justify-content-center">
+        <div className="col-md-6 col-lg-5">
+          <div className="bg-light p-5 rounded shadow">
+            <h3 className="text-center mb-4 text-primary">Đăng ký</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <label htmlFor="fullname" className="form-label fw-bold">Họ và tên</label>
+                <input
+                  type="text"
+                  id="fullname"
+                  className="form-control p-3"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
               </div>
-            </div> */}
-            <button type="submit" className="btn btn-primary w-100 py-3 rounded-pill">Đăng ký</button>
-          </form>
-          <p className="text-center mt-3 mb-0">Đã có tài khoản?
-            <a href="login" className="text-primary fw-bold">Đăng nhập tại đây</a>
-          </p>
-        </div>  
+              <div className="mb-3">
+                <label htmlFor="username" className="form-label fw-bold">Tên đăng nhập</label>
+                <input
+                  type="text"
+                  id="username"
+                  className="form-control p-3"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="email" className="form-label fw-bold">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  className="form-control p-3"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="phone" className="form-label fw-bold">Số điện thoại</label>
+                <input
+                  type="text"
+                  id="phone"
+                  className="form-control p-3"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="address" className="form-label fw-bold">Địa chỉ</label>
+                <input
+                  type="text"
+                  id="address"
+                  className="form-control p-3"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="password" className="form-label fw-bold">Mật khẩu</label>
+                <input
+                  type="password"
+                  id="password"
+                  className="form-control p-3"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="confirmPassword" className="form-label fw-bold">Xác nhận mật khẩu</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  className="form-control p-3"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary w-100 py-3 rounded-pill"
+              >
+                {loading ? "Đang xử lý..." : "Đăng ký"}
+              </button>
+            </form>
+            <p className="text-center mt-3 mb-0">
+              Đã có tài khoản?{" "}
+              <a href="/login" className="text-primary fw-bold">Đăng nhập tại đây</a>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
   );
 }

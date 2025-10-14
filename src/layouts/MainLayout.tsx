@@ -7,6 +7,7 @@ import BackToTop from "../shared/components/BackToTop";
 import { StoreInfoContext } from "../context/StoreInfoContext";
 import { getStoreInfo } from "../helper/api";
 import type { StoreInfoEntity } from "../types";
+import { AuthProvider } from "../context/AuthContext";
 
 export default function MainLayout() {
   const [storeInfo, setStoreInfo] = useState<StoreInfoEntity[]>([]);
@@ -23,12 +24,14 @@ export default function MainLayout() {
 
   return (
     <StoreInfoContext.Provider value={storeInfo}>
+        <AuthProvider>     
       <Navbar />
       <main>
         <Outlet />
       </main>
       <Footer />
       <BackToTop />
+      </AuthProvider>
     </StoreInfoContext.Provider>
   );
 }
