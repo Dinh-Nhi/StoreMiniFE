@@ -39,9 +39,17 @@ export const register = (data: {
   address?: string;
 }) => userApi.post("/auth/register", data);
 
-export const getUserProducts = () => userApi.get("/user/products");
-export const getUserProductById = (id: string) => userApi.get(`/user/products/${id}`);
-export const getCategoryByIsShow = () => userApi.get(`/user/categories/getByIsShow`);
-export const getProductByCategoryId = (id: number) => userApi.get(`/user//category/${id}`);
+export const getUserProducts = () => userApi.get("/products");
+export const getUserProductById = (id: string) => userApi.get(`/products/${id}`);
+export const getCategoryByIsShow = () => userApi.get(`/categories/getByIsShow`);
+export const getProductByCategoryId = (id: number) => userApi.get(`/products/category/${id}`);
+
+export const getBestSellingProducts = (limit = 10) =>
+  userApi.get(`/products/best-selling?limit=${limit}`);
+
+export const getDiscountedProducts = async () => {
+  const res = await userApi.get("/products/discounted");
+  return res.data;
+};
 
 export { userApi, adminApi };

@@ -7,9 +7,11 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function Navbar() {
   const storeInfo = useStoreInfo();
-  const cartCount = useSelector((state: RootState) => state.cart.items.length);
+  const cartCount = useSelector(
+    (state: RootState) =>
+      state.cart.items.reduce((sum, item) => sum + item.quantity, 0)
+  );
   const navigate = useNavigate();
-
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
@@ -59,6 +61,7 @@ export default function Navbar() {
                 {storeInfo.find((item) => item.code === "LOGO")?.name}
               </h1>
             </Link>
+
             <button
               className="navbar-toggler py-2 px-3"
               type="button"
@@ -99,20 +102,21 @@ export default function Navbar() {
 
                 <Link to="/cart" className="position-relative me-4 my-auto">
                   <i className="fa fa-shopping-bag fa-2x"></i>
-                  <span
-                    className="position-absolute bg-secondary rounded-circle d-flex align-items-center justify-content-center text-dark px-1"
-                    style={{
-                      top: "-5px",
-                      left: "15px",
-                      height: "20px",
-                      minWidth: "20px",
-                    }}
-                  >
-                    {cartCount}
-                  </span>
+                  {cartCount > 0 && (
+                    <span
+                      className="position-absolute bg-secondary rounded-circle d-flex align-items-center justify-content-center text-dark px-1"
+                      style={{
+                        top: "-5px",
+                        left: "15px",
+                        height: "20px",
+                        minWidth: "20px",
+                      }}
+                    >
+                      {cartCount}
+                    </span>
+                  )}
                 </Link>
 
-                {/* 🔹 Hiển thị user từ context */}
                 {user ? (
                   <div className="d-flex align-items-center">
                     <span className="me-3 fw-bold text-primary">

@@ -1,120 +1,114 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { getCategoryByIsShow, getProductByCategoryId } from "../helper/api";
+// import React, { createContext, useContext, useEffect, useState } from "react";
+// import { getCategoryByIsShow, getProductByCategoryId } from "../helper/api";
 
-// =====================
-// 🔹 Kiểu dữ liệu (Types)
-// =====================
-export interface Category {
-  id: number;
-  name: string;
-  description?: string;
-}
+// export interface Category {
+//   id: number;
+//   name: string;
+//   description?: string;
+//   isShow?: boolean;
+// }
 
-export interface Product {
-  id: number;
-  name: string;
-  description?: string;
-  basePrice: number;
-  active: boolean;
-  isNew: boolean;
-  isShow: boolean;
-  brandId?: number;
-  categoryId: number;
-  createdAt?: string;
-  updatedAt?: string;
-  imageUrl?: string; // nếu backend có trường ảnh
-}
+// export interface Product {
+//   id: number;
+//   name: string;
+//   description?: string;
+//   basePrice: number;
+//   active: boolean;
+//   isNew: boolean;
+//   isShow: boolean;
+//   fileKey: string;
+//   brandId?: number;
+//   categoryId: number;
+//   createdAt?: string;
+//   updatedAt?: string;
+//   variants?: any[];
+// }
 
-// =====================
-// 🔹 Context type
-// =====================
-interface ProductContextType {
-  categories: Category[];
-  products: Product[];
-  selectedCategory: number | null;
-  loading: boolean;
-  setSelectedCategory: (id: number | null) => void;
-  fetchCategories: () => Promise<void>;
-  fetchProductsByCategory: (id: number) => Promise<void>;
-}
+// interface ProductContextType {
+//   categories: Category[];
+//   products: Product[];
+//   selectedCategory: number | null;
+//   loading: boolean;
+//   setSelectedCategory: (id: number | null) => void;
+//   fetchProductsByCategory: (id: number) => Promise<void>;
+// }
 
-// =====================
-// 🔹 Khởi tạo Context
-// =====================
-const ProductContext = createContext<ProductContextType | undefined>(undefined);
+// const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-// =====================
-// 🔹 Provider chính
-// =====================
-export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+// export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
+//   children,
+// }) => {
+//   const [categories, setCategories] = useState<Category[]>([]);
+//   const [products, setProducts] = useState<Product[]>([]);
+//   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+//   const [loading, setLoading] = useState<boolean>(false);
 
-  // 🔹 Lấy danh sách danh mục được hiển thị
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const res = await getCategoryByIsShow();
-      if (res && res.data) {
-        setCategories(res.data);
-      }
-    } catch (err) {
-      console.error("❌ Error fetching categories:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+//   // 🔹 Chỉ gọi 1 lần để load danh mục + sản phẩm đầu tiên
+//   useEffect(() => {
+//     const fetchInitialData = async () => {
+//       try {
+//         setLoading(true);
+//         const res = await getCategoryByIsShow();
+//         if (res && Array.isArray(res.data)) {
+//           setCategories(res.data);
+//           if (res.data.length > 0) {
+//             const firstId = res.data[0].id;
+//             setSelectedCategory(firstId);
+//             await fetchProductsByCategory(firstId);
+//           }
+//         }
+//       } catch (err) {
+//         console.error("❌ Error fetching categories:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchInitialData();
+//   }, []);
 
-  // 🔹 Lấy sản phẩm theo categoryId
-  const fetchProductsByCategory = async (id: number) => {
-    try {
-      setLoading(true);
-      const res = await getProductByCategoryId(id);
-      if (res && res.data) {
-        setProducts(res.data);
-        setSelectedCategory(id);
-      } else {
-        setProducts([]);
-      }
-    } catch (err) {
-      console.error("❌ Error fetching products by category:", err);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+//   // 🔹 Gọi API lấy sản phẩm theo danh mục
+//   const fetchProductsByCategory = async (id: number) => {
+//     try {
+//       setLoading(true);
+//       const res = await getProductByCategoryId(id);
+//       if (res && Array.isArray(res.data)) {
+//         // 🧠 Loại bỏ trùng id (vì API bạn trả về 2 sản phẩm có id = 1)
+//         const uniqueProducts = res.data.filter(
+//           (p, index, self) => index === self.findIndex((x) => x.id === p.id)
+//         );
+//         setProducts(uniqueProducts);
+//         setSelectedCategory(id);
+//       } else {
+//         setProducts([]);
+//       }
+//     } catch (err) {
+//       console.error("❌ Error fetching products by category:", err);
+//       setProducts([]);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
-  // 🔹 Tự động tải danh mục khi context mount
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+//   return (
+//     <ProductContext.Provider
+//       value={{
+//         categories,
+//         products,
+//         selectedCategory,
+//         loading,
+//         setSelectedCategory,
+//         fetchProductsByCategory,
+//       }}
+//     >
+//       {children}
+//     </ProductContext.Provider>
+//   );
+// };
 
-  return (
-    <ProductContext.Provider
-      value={{
-        categories,
-        products,
-        selectedCategory,
-        loading,
-        setSelectedCategory,
-        fetchCategories,
-        fetchProductsByCategory,
-      }}
-    >
-      {children}
-    </ProductContext.Provider>
-  );
-};
-
-// =====================
-// 🔹 Custom Hook
-// =====================
-export const useProductContext = (): ProductContextType => {
-  const context = useContext(ProductContext);
-  if (!context) {
-    throw new Error("useProductContext must be used inside <ProductProvider>");
-  }
-  return context;
-};
+// export const useProductContext = (): ProductContextType => {
+//   const context = useContext(ProductContext);
+//   if (!context) {
+//     throw new Error("useProductContext must be used inside <ProductProvider>");
+//   }
+//   return context;
+// };

@@ -1,72 +1,135 @@
-// src/features/cart/pages/Cart.tsx
+import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../../store";
-import { removeFromCart, clearCart } from "../store/cartSlice";
+import {
+  removeFromCart,
+  clearCart,
+  updateQuantity,
+} from "../store/cartSlice";
 import api from "../../../shared/utils/api";
 
 export default function Cart() {
   const items = useSelector((s: RootState) => s.cart.items);
   const dispatch = useDispatch<AppDispatch>();
 
-  const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
-  const handleRemove = (id: string | number) => {
-    dispatch(removeFromCart(id as any));
-  };
+  const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
 
   const handleCheckout = async () => {
     try {
-      // gọi endpoint checkout/purchase (backend cần implement)
       await api.post("/purchase", { items });
-      alert("Checkout thành công!");
+      alert("✅ Checkout thành công!");
       dispatch(clearCart());
     } catch (err) {
       console.error(err);
-      alert("Checkout thất bại. Kiểm tra backend.");
+      alert("❌ Checkout thất bại. Kiểm tra backend.");
     }
   };
 
-  if (items.length === 0) {
+  // 👉 Nếu không có sản phẩm, hiển thị thông báo
+  if (!items || items.length === 0) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Shopping Cart</h1>
-        <p>Giỏ hàng trống.</p>
+      <div
+        className="container py-5 text-center"
+        style={{
+          background: "#f8f9fa",
+          borderRadius: "12px",
+          padding: "40px",
+          marginTop: "120px",         
+        }}
+      >
+        <h3 className="fw-bold text-danger mb-3">Không có sản phẩm nào</h3>
+        <p>Hãy thêm sản phẩm để bắt đầu mua sắm!</p>
       </div>
     );
   }
 
+  // 👉 Khi có sản phẩm
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Shopping Cart</h1>
+    <div className="container py-5">
+      <h2 className="fw-bold text-primary mb-4">Giỏ hàng của bạn</h2>
 
-      <div className="space-y-4">
-        {items.map((it: any) => (
-          <div key={it.id} className="flex items-center justify-between border p-3 rounded">
-            <div>
-              <div className="font-semibold">{it.name}</div>
-              <div className="text-sm text-gray-600">Qty: {it.quantity}</div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="font-medium">${(it.price * it.quantity).toFixed(2)}</div>
-              <button
-                onClick={() => handleRemove(it.id)}
-                className="text-red-600 hover:underline"
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        ))}
+      <div className="table-responsive" style={{padding : "inherit"}}>
+        <table className="table align-middle">
+          <thead className="table-light">
+            <tr>
+              <th></th>
+              <th>Sản phẩm</th>
+              <th>Đơn giá</th>
+              <th>Số lượng</th>
+              <th>Tổng</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((it) => (
+              <tr key={it.id}>
+                <td>
+                  <img
+                    src={it.image}
+                    alt={it.name}
+                    style={{ width: 60, height: 60, objectFit: "cover" }}
+                    className="rounded"
+                  />
+                </td>
+                <td className="fw-semibold">{it.name}</td>
+                <td>{it.price.toLocaleString()}₫</td>
+                <td>
+                  <div className="d-flex align-items-center">
+                    <button
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() =>
+                        dispatch(
+                          updateQuantity({
+                            id: it.id,
+                            quantity: it.quantity - 1,
+                          })
+                        )
+                      }
+                    >
+                      -
+                    </button>
+                    <span className="px-3">{it.quantity}</span>
+                    <button
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() =>
+                        dispatch(
+                          updateQuantity({
+                            id: it.id,
+                            quantity: it.quantity + 1,
+                          })
+                        )
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                </td>
+                <td>{(it.price * it.quantity).toLocaleString()}₫</td>
+                <td>
+                  <button
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => dispatch(removeFromCart(it.id))}
+                  >
+                    Xóa
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <div className="mt-6 flex justify-between items-center">
-        <div className="text-xl font-bold">Total: ${total.toFixed(2)}</div>
+      <div className="d-flex justify-content-between align-items-center mt-4">
+        <h4 className="fw-bold">Tổng cộng: {total.toLocaleString()}₫</h4>
         <button
           onClick={handleCheckout}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          className="btn btn-success px-4 py-2 rounded-pill"
         >
-          Checkout
+          Thanh toán
         </button>
       </div>
     </div>

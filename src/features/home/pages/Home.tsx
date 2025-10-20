@@ -1,11 +1,11 @@
 // src/features/home/pages/Home.tsx
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import BestsellerSection from "../components/BestsellerSection";
-import VegetableCarousel from "../components/VegetableCarousel";
+import BestsellerSection from "../components/ProductBestseller";
+import VegetableCarousel from "../components/ProductDiscount";
 import TestimonialSection from "../components/NewsSection";
 import { useStoreInfo } from "../../../context/StoreInfoContext";
-import ProductsSection from "../components/ProductsSection";
+import ProductsSection from "../components/ProductCollection";
 
 export default function Home() {
   const storeInfo = useStoreInfo();
@@ -190,7 +190,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
       {/* Testimonial Section */}
       <TestimonialSection />
       </>

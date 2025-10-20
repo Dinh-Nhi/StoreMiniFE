@@ -1,10 +1,11 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
-interface CartItem {
-  id: number;
+export interface CartItem {
+  id: number | string;
   name: string;
   price: number;
   quantity: number;
+  image?: string;
 }
 
 interface CartState {
@@ -12,24 +13,50 @@ interface CartState {
 }
 
 const initialState: CartState = {
-  items: [],
+  items: JSON.parse(localStorage.getItem("cart") || "[]"),
+};
+
+const saveToLocal = (items: CartItem[]) => {
+  try {
+    localStorage.setItem("cart", JSON.stringify(items));
+  } catch (e) {
+    console.warn("localStorage error", e);
+  }
 };
 
 const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    addToCart: (state, action: PayloadAction<CartItem>) => {
-      state.items.push(action.payload);
+    addToCart(state, action) {
+      const payload: CartItem = action.payload;
+      const existing = state.items.find((i) => i.id === payload.id);
+      if (existing) {
+        existing.quantity += payload.quantity;
+      } else {
+        state.items.push({ ...payload });
+      }
+      saveToLocal(state.items);
     },
-    removeFromCart: (state, action: PayloadAction<number>) => {
-      state.items = state.items.filter((item) => item.id !== action.payload);
+    removeFromCart(state, action) {
+      const id = action.payload;
+      state.items = state.items.filter((i) => i.id !== id);
+      saveToLocal(state.items);
     },
-    clearCart: (state) => {
+    updateQuantity(state, action) {
+      const { id, quantity } = action.payload;
+      const item = state.items.find((i) => i.id === id);
+      if (item) item.quantity = Math.max(1, quantity);
+      saveToLocal(state.items);
+    },
+    clearCart(state) {
       state.items = [];
+      saveToLocal(state.items);
     },
   },
 });
 
-export const { addToCart, removeFromCart, clearCart } = cartSlice.actions;
+export const { addToCart, removeFromCart, updateQuantity, clearCart } =
+  cartSlice.actions;
+
 export default cartSlice.reducer;

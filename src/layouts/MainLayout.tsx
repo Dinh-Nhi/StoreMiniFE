@@ -24,7 +24,7 @@ export default function MainLayout() {
 
   return (
     <StoreInfoContext.Provider value={storeInfo}>
-        <AuthProvider>     
+        <AuthProvider>  
       <Navbar />
       <main>
         <Outlet />
