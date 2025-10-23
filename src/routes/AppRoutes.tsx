@@ -2,12 +2,13 @@
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Home from "../features/home/pages/Home";
-import ProductList from "../features/products/pages/ProductList";
-import ProductDetail from "../features/products/pages/ProductDetail";
 import Cart from "../features/cart/pages/Cart";
+import Checkout from "../features/cart/pages/Checkout";
+import Orders from "../features/cart/pages/Orders";
+import OrderDetail from "../features/cart/pages/OrderDetail";
+import ThankYou from "../features/cart/pages/ThankYou";
 import Login from "../features/auth/pages/Login";
 import Register from "../features/auth/pages/Register";
-// import { ProductProvider } from "../context/ProductContext";
 
 export default function AppRoutes() {
   return (
@@ -40,8 +41,12 @@ export default function AppRoutes() {
 
         {/* 🔹 Các route khác không cần ProductContext */}
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/orders/:id" element={<OrderDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/thankyou" element={<ThankYou />} />
       </Route>
     </Routes>
   );

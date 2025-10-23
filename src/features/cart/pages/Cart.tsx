@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../../store";
 import {
@@ -6,7 +7,7 @@ import {
   clearCart,
   updateQuantity,
 } from "../store/cartSlice";
-import api from "../../../shared/utils/api";
+
 
 export default function Cart() {
   const items = useSelector((s: RootState) => s.cart.items);
@@ -18,15 +19,19 @@ export default function Cart() {
 
   const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
 
-  const handleCheckout = async () => {
-    try {
-      await api.post("/purchase", { items });
-      alert("✅ Checkout thành công!");
-      dispatch(clearCart());
-    } catch (err) {
-      console.error(err);
-      alert("❌ Checkout thất bại. Kiểm tra backend.");
-    }
+  // const handleCheckout = async () => {
+  //   try {
+  //     await api.post("/purchase", { items });
+  //     alert("✅ Checkout thành công!");
+  //     dispatch(clearCart());
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert("❌ Checkout thất bại. Kiểm tra backend.");
+  //   }
+  // };
+  const navigate = useNavigate();
+  const handleCheckout = () => {
+    navigate("/checkout");
   };
 
   // 👉 Nếu không có sản phẩm, hiển thị thông báo

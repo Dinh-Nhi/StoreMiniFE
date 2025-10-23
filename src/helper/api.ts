@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import type { OrderRequest } from "../types/order"; 
 // --- Tạo các instance axios ---
 const userApi = axios.create({
   baseURL: import.meta.env.VITE_USER_API,
@@ -50,6 +50,27 @@ export const getBestSellingProducts = (limit = 10) =>
 export const getDiscountedProducts = async () => {
   const res = await userApi.get("/products/discounted");
   return res.data;
+};
+
+// 🧾 --- ORDER SERVICE ---
+export const orderService = {
+  /** 🟢 Tạo đơn hàng (checkout) */
+  createOrder: async (data: OrderRequest) => {
+    const res = await userApi.post("/orders", data);
+    return res.data;
+  },
+
+  /** 🔵 Lấy danh sách đơn hàng của người dùng (theo phone hoặc userId) */
+  getOrdersByPhone: async (phone: string) => {
+    const res = await userApi.get(`/orders?phone=${phone}`);
+    return res.data;
+  },
+
+  /** 🟣 Lấy chi tiết đơn hàng theo ID */
+  getOrderById: async (id: number) => {
+    const res = await userApi.get(`/orders/${id}`);
+    return res.data;
+  },
 };
 
 export { userApi, adminApi };
