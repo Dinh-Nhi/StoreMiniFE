@@ -3,7 +3,7 @@ export interface StoreInfoEntity {
   code: string;
   parentCode?: string | null;
   name: string;
-  fileKey?: string | null;
+  fileKey: string;
   sort: number;
   status: number;
   link?: string | null;

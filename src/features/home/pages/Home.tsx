@@ -1,21 +1,64 @@
-// src/features/home/pages/Home.tsx
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import BestsellerSection from "../components/ProductBestseller";
 import VegetableCarousel from "../components/ProductDiscount";
-import TestimonialSection from "../components/NewsSection";
 import { useStoreInfo } from "../../../context/StoreInfoContext";
 import ProductsSection from "../components/ProductCollection";
+import { getMediaByFileKey } from "../../../helper/api";
+
+interface Banner {
+  id: number;
+  code: string;
+  name: string;
+  sort: number;
+  fileKey: string;
+}
 
 export default function Home() {
   const storeInfo = useStoreInfo();
-
   const [searchQuery, setSearchQuery] = useState("");
+  const [bannerImages, setBannerImages] = useState<{ [key: number]: string }>(
+    {}
+  );
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const banners: Banner[] = storeInfo
+    .filter((item) => item.code === "BANNER")
+    .sort((a, b) => a.sort - b.sort);
+
+  // ✅ Load ảnh banner từ API (trả blob → URL)
+  useEffect(() => {
+    const fetchBannerImages = async () => {
+      const imageMap: { [key: number]: string } = {};
+
+      for (const banner of banners) {
+        try {
+          const response = await getMediaByFileKey(banner.fileKey); // axios blob
+          const blob = response.data;
+          const url = URL.createObjectURL(blob);
+          imageMap[banner.id] = url;
+        } catch (error) {
+          console.error("❌ Lỗi khi tải ảnh banner:", error);
+        }
+      }
+
+      setBannerImages(imageMap);
+    };
+
+    if (banners.length > 0) fetchBannerImages();
+  }, [banners]);
+
+  // ✅ Tự động chuyển banner sau mỗi 5s
+  useEffect(() => {
+    if (banners.length === 0) return;
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [banners]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Redirect to products page with search query
       window.location.href = `/products?search=${encodeURIComponent(
         searchQuery
       )}`;
@@ -26,92 +69,88 @@ export default function Home() {
     <>
       {/* Hero Section */}
       <div className="container-fluid py-5 mb-5 hero-header">
-        <div className="container py-5">
-          <div className="row g-5 align-items-center">
-            <div className="col-md-12 col-lg-7">
-              <h4 className="mb-3 text-secondary">100% Organic Foods</h4>
-              <h1 className="mb-5 display-3 text-primary">
-                Organic Veggies & Fruits Foods
-              </h1>
-              <form
-                onSubmit={handleSearch}
-                className="position-relative mx-auto"
-              >
-                <input
-                  className="form-control border-2 border-secondary w-75 py-3 px-4 rounded-pill"
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button
-                  type="submit"
-                  className="btn btn-primary border-2 border-secondary py-3 px-4 position-absolute rounded-pill text-white h-100"
-                  style={{ top: 0, right: "25%" }}
+        <div className="container-fluid p-0">
+          <div
+            id="heroCarousel"
+            className="carousel slide position-relative"
+            data-bs-ride="carousel"
+          >
+            <div className="carousel-inner">
+              {banners.map((banner, index) => (
+                <div
+                  key={banner.id}
+                  className={`carousel-item ${
+                    index === activeIndex ? "active" : ""
+                  }`}
                 >
-                  Submit Now
-                </button>
-              </form>
-            </div>
-            <div className="col-md-12 col-lg-5">
-              <div
-                id="carouselId"
-                className="carousel slide position-relative"
-                data-bs-ride="carousel"
-              >
-                <div className="carousel-inner" role="listbox">
-                  <div className="carousel-item active rounded">
+                  {bannerImages[banner.id] ? (
                     <img
-                      src="../../../../public/img/hero-img-1.png"
-                      className="img-fluid w-100 h-100 bg-secondary rounded"
-                      alt="Fresh fruits"
+                      src={bannerImages[banner.id]}
+                      className="d-block w-100"
+                      alt={banner.name || "Banner"}
+                      style={{
+                        objectFit: "cover",
+                        height: "500px", // Adjust height as needed
+                        maxHeight: "100vh",
+                      }}
                     />
-                    <Link
-                      to="/products"
-                      className="btn px-4 py-2 text-white rounded"
+                  ) : (
+                    <div
+                      className="bg-light text-center rounded d-flex align-items-center justify-content-center"
+                      style={{ height: "500px" }}
                     >
-                      Fruites
-                    </Link>
-                  </div>
-                  <div className="carousel-item rounded">
-                    <img
-                      src="../../../../public/img/hero-img-2.png"
-                      className="img-fluid w-100 h-100 rounded"
-                      alt="Fresh vegetables"
-                    />
-                    <Link
-                      to="/products"
-                      className="btn px-4 py-2 text-white rounded"
-                    >
-                      Vesitables
-                    </Link>
-                  </div>
+                      Đang tải ảnh...
+                    </div>
+                  )}
                 </div>
+              ))}
+            </div>
+
+            {/* Navigation Buttons */}
+            <button
+              className="carousel-control-prev"
+              type="button"
+              data-bs-target="#heroCarousel"
+              data-bs-slide="prev"
+              onClick={() =>
+                setActiveIndex(
+                  activeIndex === 0 ? banners.length - 1 : activeIndex - 1
+                )
+              }
+            >
+              <span
+                className="carousel-control-prev-icon"
+                aria-hidden="true"
+              ></span>
+              <span className="visually-hidden">Previous</span>
+            </button>
+            <button
+              className="carousel-control-next"
+              type="button"
+              data-bs-target="#heroCarousel"
+              data-bs-slide="next"
+              onClick={() => setActiveIndex((activeIndex + 1) % banners.length)}
+            >
+              <span
+                className="carousel-control-next-icon"
+                aria-hidden="true"
+              ></span>
+              <span className="visually-hidden">Next</span>
+            </button>
+
+            {/* Carousel Indicators */}
+            <div className="carousel-indicators">
+              {banners.map((_, index) => (
                 <button
-                  className="carousel-control-prev"
+                  key={index}
                   type="button"
-                  data-bs-target="#carouselId"
-                  data-bs-slide="prev"
-                >
-                  <span
-                    className="carousel-control-prev-icon"
-                    aria-hidden="true"
-                  ></span>
-                  <span className="visually-hidden">Previous</span>
-                </button>
-                <button
-                  className="carousel-control-next"
-                  type="button"
-                  data-bs-target="#carouselId"
-                  data-bs-slide="next"
-                >
-                  <span
-                    className="carousel-control-next-icon"
-                    aria-hidden="true"
-                  ></span>
-                  <span className="visually-hidden">Next</span>
-                </button>
-              </div>
+                  data-bs-target="#heroCarousel"
+                  data-bs-slide-to={index}
+                  className={index === activeIndex ? "active" : ""}
+                  aria-current={index === activeIndex ? "true" : "false"}
+                  onClick={() => setActiveIndex(index)}
+                ></button>
+              ))}
             </div>
           </div>
         </div>
@@ -145,6 +184,7 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Products */}
       <ProductsSection />
 
       {/* Vegetable Carousel Section */}
@@ -152,46 +192,6 @@ export default function Home() {
 
       {/* Bestseller Section */}
       <BestsellerSection />
-
-      {/* Stats Section */}
-      <div className="container-fluid py-5">
-        <div className="container">
-          <div className="bg-light p-5 rounded">
-            <div className="row g-4 justify-content-center">
-              <div className="col-md-6 col-lg-6 col-xl-3">
-                <div className="counter bg-white rounded p-5">
-                  <i className="fa fa-users text-secondary"></i>
-                  <h4>satisfied customers</h4>
-                  <h1>1963</h1>
-                </div>
-              </div>
-              <div className="col-md-6 col-lg-6 col-xl-3">
-                <div className="counter bg-white rounded p-5">
-                  <i className="fa fa-users text-secondary"></i>
-                  <h4>quality of service</h4>
-                  <h1>99%</h1>
-                </div>
-              </div>
-              <div className="col-md-6 col-lg-6 col-xl-3">
-                <div className="counter bg-white rounded p-5">
-                  <i className="fa fa-users text-secondary"></i>
-                  <h4>quality certificates</h4>
-                  <h1>33</h1>
-                </div>
-              </div>
-              <div className="col-md-6 col-lg-6 col-xl-3">
-                <div className="counter bg-white rounded p-5">
-                  <i className="fa fa-users text-secondary"></i>
-                  <h4>Available Products</h4>
-                  <h1>789</h1>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* Testimonial Section */}
-      <TestimonialSection />
-      </>
-    );
-  }
+    </>
+  );
+}

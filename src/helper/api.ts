@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { OrderRequest } from "../types/order"; 
+import type { OrderRequest } from "../types/order";
 // --- Tạo các instance axios ---
 const userApi = axios.create({
   baseURL: import.meta.env.VITE_USER_API,
@@ -7,6 +7,10 @@ const userApi = axios.create({
 
 const adminApi = axios.create({
   baseURL: import.meta.env.VITE_ADMIN_API,
+});
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API,
 });
 
 // --- Thêm interceptor để tự động gắn token ---
@@ -40,9 +44,11 @@ export const register = (data: {
 }) => userApi.post("/auth/register", data);
 
 export const getUserProducts = () => userApi.get("/products");
-export const getUserProductById = (id: string) => userApi.get(`/products/${id}`);
+export const getUserProductById = (id: string) =>
+  userApi.get(`/products/${id}`);
 export const getCategoryByIsShow = () => userApi.get(`/categories/getByIsShow`);
-export const getProductByCategoryId = (id: number) => userApi.get(`/products/category/${id}`);
+export const getProductByCategoryId = (id: number) =>
+  userApi.get(`/products/category/${id}`);
 
 export const getBestSellingProducts = (limit = 10) =>
   userApi.get(`/products/best-selling?limit=${limit}`);
@@ -60,6 +66,16 @@ export const orderService = {
     return res.data;
   },
 
+  createOrderVnpay: async (data: OrderRequest) => {
+    const res = await userApi.post("/orders/payment", data);
+    return res.data;
+  },
+
+  updateStatusOrder: async (id: string) => {
+    const res = await userApi.post("/orders/updateStatus", { orderId: id });
+    return res.data;
+  },
+
   /** 🔵 Lấy danh sách đơn hàng của người dùng (theo phone hoặc userId) */
   getOrdersByPhone: async (phone: string) => {
     const res = await userApi.get(`/orders?phone=${phone}`);
@@ -72,5 +88,10 @@ export const orderService = {
     return res.data;
   },
 };
+
+export const getMediaByFileKey = (filekey: string) =>
+  api.get(`/media/viewFileKey/${filekey}`, {
+    responseType: "blob",
+  });
 
 export { userApi, adminApi };

@@ -110,7 +110,7 @@ export default function Footer() {
               </div>
             </div>
             <div className="col-lg-3 col-md-6">
-              <div className="footer-item">
+              <div className="d-flex flex-column text-start footer-item">
                 <h4 className="text-light mb-3">
                   {storeInfo.find((item) => item.code === "MENU4")?.name}
                 </h4>

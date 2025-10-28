@@ -1,4 +1,3 @@
-// src/routes/AppRoutes.tsx
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Home from "../features/home/pages/Home";
@@ -9,6 +8,7 @@ import OrderDetail from "../features/cart/pages/OrderDetail";
 import ThankYou from "../features/cart/pages/ThankYou";
 import Login from "../features/auth/pages/Login";
 import Register from "../features/auth/pages/Register";
+import VnpayReturn from "../features/cart/pages/VnpayReturn";
 
 export default function AppRoutes() {
   return (
@@ -18,7 +18,7 @@ export default function AppRoutes() {
           path="/"
           element={
             // <ProductProvider>
-              <Home />
+            <Home />
             // </ProductProvider>
           }
         />
@@ -46,6 +46,7 @@ export default function AppRoutes() {
         <Route path="/orders/:id" element={<OrderDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/vnpay-return" element={<VnpayReturn />} />
         <Route path="/thankyou" element={<ThankYou />} />
       </Route>
     </Routes>

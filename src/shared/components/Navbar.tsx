@@ -7,9 +7,8 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function Navbar() {
   const storeInfo = useStoreInfo();
-  const cartCount = useSelector(
-    (state: RootState) =>
-      state.cart.items.reduce((sum, item) => sum + item.quantity, 0)
+  const cartCount = useSelector((state: RootState) =>
+    state.cart.items.reduce((sum, item) => sum + item.quantity, 0)
   );
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -39,17 +38,6 @@ export default function Navbar() {
                 </a>
               </small>
             </div>
-            <div className="top-link pe-2">
-              <a href="#" className="text-white">
-                <small className="text-white mx-2">Privacy Policy</small>/
-              </a>
-              <a href="#" className="text-white">
-                <small className="text-white mx-2">Terms of Use</small>/
-              </a>
-              <a href="#" className="text-white">
-                <small className="text-white ms-2">Sales and Refunds</small>
-              </a>
-            </div>
           </div>
         </div>
 
@@ -71,7 +59,10 @@ export default function Navbar() {
               <span className="fa fa-bars text-primary"></span>
             </button>
 
-            <div className="collapse navbar-collapse bg-white" id="navbarCollapse">
+            <div
+              className="collapse navbar-collapse bg-white"
+              id="navbarCollapse"
+            >
               <div className="navbar-nav mx-auto">
                 {storeInfo
                   .filter((item) => item.parentCode === "MENU")
@@ -85,9 +76,6 @@ export default function Navbar() {
                       {menu.name}
                     </Link>
                   ))}
-                <Link to="/contact" className="nav-item nav-link">
-                  Contact
-                </Link>
               </div>
 
               {/* --- User / Cart / Search --- */}
