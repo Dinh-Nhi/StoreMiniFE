@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BestsellerSection from "../components/ProductBestseller";
 import VegetableCarousel from "../components/ProductDiscount";
 import { useStoreInfo } from "../../../context/StoreInfoContext";
@@ -21,31 +21,48 @@ export default function Home() {
   );
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const banners: Banner[] = storeInfo
-    .filter((item) => item.code === "BANNER")
-    .sort((a, b) => a.sort - b.sort);
+  // ✅ Memo hóa banners (chỉ tính lại khi storeInfo thay đổi)
+  const banners = useMemo<Banner[]>(() => {
+    return storeInfo
+      .filter((item) => item.code === "BANNER")
+      .sort((a, b) => a.sort - b.sort);
+  }, [storeInfo]);
 
-  // ✅ Load ảnh banner từ API (trả blob → URL)
+  // ✅ Load ảnh banner từ API (tối ưu, tải song song)
   useEffect(() => {
+    if (banners.length === 0) return;
+
+    let isMounted = true;
+
     const fetchBannerImages = async () => {
-      const imageMap: { [key: number]: string } = {};
+      try {
+        const imageMap: Record<number, string> = {};
 
-      for (const banner of banners) {
-        try {
-          const response = await getMediaByFileKey(banner.fileKey); // axios blob
-          const blob = response.data;
-          const url = URL.createObjectURL(blob);
-          imageMap[banner.id] = url;
-        } catch (error) {
-          console.error("❌ Lỗi khi tải ảnh banner:", error);
-        }
+        const results = await Promise.all(
+          banners.map(async (banner) => {
+            const res = await getMediaByFileKey(banner.fileKey);
+            const blob = res.data;
+            const url = URL.createObjectURL(blob);
+            return { id: banner.id, url };
+          })
+        );
+
+        results.forEach(({ id, url }) => (imageMap[id] = url));
+
+        if (isMounted) setBannerImages(imageMap);
+      } catch (error) {
+        console.error("❌ Lỗi khi tải ảnh banner:", error);
       }
-
-      setBannerImages(imageMap);
     };
 
-    if (banners.length > 0) fetchBannerImages();
-  }, [banners]);
+    fetchBannerImages();
+
+    // 🧹 Giải phóng URL cũ khi component unmount hoặc banners đổi
+    return () => {
+      isMounted = false;
+      Object.values(bannerImages).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [banners]); // ✅ Chỉ chạy lại khi danh sách banner thực sự thay đổi
 
   // ✅ Tự động chuyển banner sau mỗi 5s
   useEffect(() => {
@@ -55,15 +72,6 @@ export default function Home() {
     }, 5000);
     return () => clearInterval(interval);
   }, [banners]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = `/products?search=${encodeURIComponent(
-        searchQuery
-      )}`;
-    }
-  };
 
   return (
     <>

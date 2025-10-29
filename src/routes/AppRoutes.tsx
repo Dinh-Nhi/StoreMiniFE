@@ -14,32 +14,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route element={<MainLayout />}>
-        <Route
-          path="/"
-          element={
-            // <ProductProvider>
-            <Home />
-            // </ProductProvider>
-          }
-        />
-        {/* <Route
-          path="/products"
-          element={
-            <ProductProvider>
-              <ProductList />
-            </ProductProvider>
-          }
-        />
-        <Route
-          path="/products/:id"
-          element={
-            <ProductProvider>
-              <ProductDetail />
-            </ProductProvider>
-          }
-        /> */}
-
-        {/* 🔹 Các route khác không cần ProductContext */}
+        <Route path="/" element={<Home />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />

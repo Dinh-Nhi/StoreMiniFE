@@ -3,11 +3,11 @@ import { Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Navbar from "../shared/components/Navbar";
 import Footer from "../shared/components/Footer";
-import BackToTop from "../shared/components/BackToTop";
 import { StoreInfoContext } from "../context/StoreInfoContext";
 import { getStoreInfo } from "../helper/api";
 import type { StoreInfoEntity } from "../types";
 import { AuthProvider } from "../context/AuthContext";
+import ChatWidget from "../features/ai/ChatWidget";
 
 export default function MainLayout() {
   const [storeInfo, setStoreInfo] = useState<StoreInfoEntity[]>([]);
@@ -24,13 +24,16 @@ export default function MainLayout() {
 
   return (
     <StoreInfoContext.Provider value={storeInfo}>
-        <AuthProvider>  
-      <Navbar />
-      <main>
-        <Outlet />
-      </main>
-      <Footer />
-      <BackToTop />
+      <AuthProvider>
+        <Navbar />
+        <main>
+          <Outlet />
+        </main>
+        <Footer />
+        {/* <BackToTop /> */}
+        <div className="fixed z-[9999]">
+          <ChatWidget />
+        </div>
       </AuthProvider>
     </StoreInfoContext.Provider>
   );
