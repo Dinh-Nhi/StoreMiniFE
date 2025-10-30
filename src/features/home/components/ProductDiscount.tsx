@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../cart/store/cartSlice";
 import { type AppDispatch } from "../../../store";
-import { getDiscountedProducts } from "../../../helper/api";
-
-// ✅ Nếu bạn dùng react-toastify thì import thêm:
+import { getDiscountedProducts, getMediaProductByFileKey } from "../../../helper/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -20,20 +18,54 @@ interface DiscountedProduct {
 export default function DiscountedProductCarousel() {
   const dispatch = useDispatch<AppDispatch>();
   const [products, setProducts] = useState<DiscountedProduct[]>([]);
+  const [productImages, setProductImages] = useState<{ [key: number]: string }>({});
   const [startIndex, setStartIndex] = useState(0);
   const visibleCount = 4;
 
-  // 🔹 Lấy danh sách sản phẩm giảm giá
+  // 🔹 Lấy danh sách sản phẩm giảm giá + ảnh từ fileKey
   useEffect(() => {
+    let isMounted = true;
+
     const fetchData = async () => {
       try {
         const res = await getDiscountedProducts();
-        setProducts(res || []);
+        const data = res || [];
+        if (!isMounted) return;
+        setProducts(data);
+
+        // ✅ Tải ảnh song song
+        const imageMap: Record<number, string> = {};
+        const results = await Promise.all(
+          data.map(async (p: DiscountedProduct) => {
+            if (p.fileKey) {
+              try {
+                const res = await getMediaProductByFileKey(p.fileKey);
+                const blob = res.data;
+                const url = URL.createObjectURL(blob);
+                return { id: p.id, url };
+              } catch (error) {
+                console.warn(`⚠️ Không tải được ảnh sản phẩm ID ${p.id}`);
+                return { id: p.id, url: "/img/placeholder.png" };
+              }
+            } else {
+              return { id: p.id, url: "/img/placeholder.png" };
+            }
+          })
+        );
+
+        results.forEach(({ id, url }) => (imageMap[id] = url));
+        if (isMounted) setProductImages(imageMap);
       } catch (err) {
-        console.error("Lỗi khi tải sản phẩm giảm giá:", err);
+        console.error("❌ Lỗi khi tải sản phẩm giảm giá:", err);
       }
     };
+
     fetchData();
+
+    return () => {
+      isMounted = false;
+      Object.values(productImages).forEach((url) => URL.revokeObjectURL(url));
+    };
   }, []);
 
   // 🔹 Tự động chuyển carousel
@@ -51,7 +83,7 @@ export default function DiscountedProductCarousel() {
     ...products.slice(0, Math.max(0, startIndex + visibleCount - products.length)),
   ].slice(0, visibleCount);
 
-  // 🔹 Hàm thêm vào giỏ
+  // 🔹 Thêm vào giỏ hàng
   const handleAddToCart = (product: DiscountedProduct) => {
     const finalPrice = Math.round(product.basePrice * (1 - product.discount / 100));
 
@@ -61,11 +93,10 @@ export default function DiscountedProductCarousel() {
         name: product.name,
         price: finalPrice,
         quantity: 1,
-        image: product.fileKey,
+        image: productImages[product.id] || "/img/placeholder.png",
       })
     );
 
-    // ✅ Hiển thị thông báo
     toast.success(`🛒 Đã thêm "${product.name}" vào giỏ hàng!`, {
       position: "bottom-right",
       autoClose: 2000,
@@ -106,7 +137,7 @@ export default function DiscountedProductCarousel() {
 
                   {/* Ảnh sản phẩm */}
                   <img
-                    src={product.fileKey || "/img/placeholder.png"}
+                    src={productImages[product.id] || "/img/placeholder.png"}
                     className="img-fluid rounded-top w-100"
                     alt={product.name}
                     style={{

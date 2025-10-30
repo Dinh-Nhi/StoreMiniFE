@@ -19,9 +19,38 @@ export default function Checkout() {
     paymentMethod: "COD" as "COD" | "BANK_TRANSFER",
   });
 
+  const [images, setImages] = useState<Record<string, string>>({});
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+
+  // 🔹 Load ảnh sản phẩm (chuẩn như Cart.tsx)
+  useEffect(() => {
+    if (!items || items.length === 0) return;
+
+    const imageMap: Record<string, string> = {};
+    const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+
+    for (const it of items) {
+      const key = `${it.productId}-${it.variantId}-${it.sizeId}`;
+
+      if (
+        it.image?.startsWith("http") ||
+        it.image?.startsWith("blob:") ||
+        it.image?.includes("/img/")
+      ) {
+        imageMap[key] = it.image;
+      } else if (it.image) {
+        // ✅ Sử dụng API media chuẩn
+        imageMap[key] = `${baseUrl}/media/viewFileKeyForProduct/${it.image}`;
+      } else {
+        imageMap[key] = "/img/placeholder.png";
+      }
+    }
+
+    setImages(imageMap);
+  }, [items]);
 
   const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
 
@@ -40,13 +69,16 @@ export default function Checkout() {
         address: form.address.trim(),
         paymentMethod: form.paymentMethod,
         items: items.map((it) => ({
-          variantId: Number(it.variantId || it.id),
+          variantId: Number(it.variantId),
           quantity: it.quantity,
+          color: it.color,
+          size: it.size,
         })),
       };
 
+      console.log(orderPayload)
+
       if (form.paymentMethod === "COD") {
-        // 🟢 Thanh toán COD
         const orderRes = await orderService.createOrder(orderPayload);
         toast.success("🎉 Đặt hàng thành công!");
         dispatch(clearCart());
@@ -55,7 +87,7 @@ export default function Checkout() {
         const res = await orderService.createOrderVnpay(orderPayload);
         const paymentUrl = res.paymentUrl;
         if (paymentUrl) {
-          window.location.href = paymentUrl; // ✅ Redirect sang VNPAY
+          window.location.href = paymentUrl;
         } else {
           toast.error("❌ Không tạo được link VNPAY!");
         }
@@ -66,15 +98,28 @@ export default function Checkout() {
     }
   };
 
+  if (!items.length) {
+    return (
+      <div
+        className="container text-center"
+        style={{
+          background: "#f8f9fa",
+          borderRadius: "12px",
+          padding: "40px",
+          marginTop: "120px",
+        }}
+      >
+        <h3 className="fw-bold text-danger mb-3">Không có sản phẩm nào</h3>
+        <p>Hãy thêm sản phẩm để bắt đầu mua sắm!</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-5" style={{ maxWidth: "900px" }}>
       <h2 className="fw-bold text-primary mb-4">Thanh toán</h2>
 
-      <form
-        onSubmit={handleSubmit}
-        className="row g-4"
-        style={{ padding: "inherit" }}
-      >
+      <form onSubmit={handleSubmit} className="row g-4">
         {/* THÔNG TIN GIAO HÀNG */}
         <div className="col-md-7">
           <div className="card shadow-sm border-0">
@@ -162,17 +207,46 @@ export default function Checkout() {
             <div className="card-body">
               <h5 className="fw-bold mb-3">Tóm tắt đơn hàng</h5>
 
-              {items.map((it) => (
-                <div
-                  key={it.id}
-                  className="d-flex justify-content-between align-items-center mb-2"
-                >
-                  <span>
-                    {it.name} × {it.quantity}
-                  </span>
-                  <span>{(it.price * it.quantity).toLocaleString()}₫</span>
-                </div>
-              ))}
+              {items.map((it) => {
+                const key = `${it.productId}-${it.variantId}-${it.sizeId}`;
+                const imgSrc = images[key] || "/img/placeholder.png";
+
+                return (
+                  <div
+                    key={key}
+                    className="d-flex align-items-center mb-3 border-bottom pb-2"
+                  >
+                    <img
+                      src={imgSrc}
+                      alt={it.name}
+                      width={60}
+                      height={60}
+                      className="rounded"
+                      style={{
+                        objectFit: "cover",
+                        marginRight: "10px",
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "/img/placeholder.png";
+                      }}
+                    />
+                    <div className="flex-grow-1 text-start">
+                      <div className="fw-semibold">{it.name}</div>
+                      <small className="text-muted d-block">
+                        Màu: {it.color || "—"} | Size: {it.size || "—"}
+                      </small>
+                      <div>
+                        SL: {it.quantity} ×{" "}
+                        {it.price.toLocaleString()}₫
+                      </div>
+                    </div>
+                    <div className="fw-bold text-end" style={{ minWidth: 80 }}>
+                      {(it.price * it.quantity).toLocaleString()}₫
+                    </div>
+                  </div>
+                );
+              })}
 
               <hr />
               <h5 className="fw-bold d-flex justify-content-between">

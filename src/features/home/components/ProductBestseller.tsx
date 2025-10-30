@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../cart/store/cartSlice";
 import { type AppDispatch } from "../../../store";
-import { getBestSellingProducts } from "../../../helper/api";
+import { getBestSellingProducts, getMediaProductByFileKey } from "../../../helper/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -19,23 +19,59 @@ type BestsellerProduct = {
 export default function BestsellerSection() {
   const dispatch = useDispatch<AppDispatch>();
   const [products, setProducts] = useState<BestsellerProduct[]>([]);
+  const [productImages, setProductImages] = useState<{ [key: number]: string }>({});
   const [loading, setLoading] = useState(true);
 
-  // --- Fetch API ---
+  // 🔹 Lấy danh sách sản phẩm bán chạy + tải ảnh theo fileKey
   useEffect(() => {
+    let isMounted = true;
+
     const fetchBestSelling = async () => {
       try {
         const res = await getBestSellingProducts(6);
-        setProducts(res?.data || []);
+        const data = res?.data || [];
+        if (!isMounted) return;
+
+        setProducts(data);
+
+        // ✅ Tải ảnh song song
+        const imageMap: Record<number, string> = {};
+        const results = await Promise.all(
+          data.map(async (p: BestsellerProduct) => {
+            if (p.fileKey) {
+              try {
+                const res = await getMediaProductByFileKey(p.fileKey);
+                const blob = res.data;
+                const url = URL.createObjectURL(blob);
+                return { id: p.id, url };
+              } catch (error) {
+                console.warn(`⚠️ Không tải được ảnh sản phẩm ID ${p.id}`);
+                return { id: p.id, url: "/img/placeholder.png" };
+              }
+            } else {
+              return { id: p.id, url: "/img/placeholder.png" };
+            }
+          })
+        );
+
+        results.forEach(({ id, url }) => (imageMap[id] = url));
+        if (isMounted) setProductImages(imageMap);
       } catch (err) {
-        console.error("Failed to load best-selling products:", err);
+        console.error("❌ Lỗi khi tải sản phẩm bán chạy:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
+
     fetchBestSelling();
+
+    return () => {
+      isMounted = false;
+      Object.values(productImages).forEach((url) => URL.revokeObjectURL(url));
+    };
   }, []);
 
+  // 🔹 Xử lý thêm vào giỏ hàng
   const handleAddToCart = (product: BestsellerProduct) => {
     const finalPrice = Math.round(
       product.basePrice * (1 - (product.discount || 0) / 100)
@@ -47,11 +83,10 @@ export default function BestsellerSection() {
         name: product.name,
         price: finalPrice,
         quantity: 1,
-        image: product.fileKey,
+        image: productImages[product.id] || "/img/placeholder.png",
       })
     );
 
-    // ✅ Thông báo toast
     toast.success(`🛒 Đã thêm "${product.name}" vào giỏ hàng!`, {
       position: "bottom-right",
       autoClose: 2000,
@@ -59,9 +94,11 @@ export default function BestsellerSection() {
     });
   };
 
+  // 🔹 Format giá tiền
   const formatCurrency = (value: number) =>
     value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 
+  // 🔹 Render sao đánh giá
   const renderStars = (rating: number = 4) => {
     return Array.from({ length: 5 }, (_, index) => (
       <i
@@ -106,37 +143,32 @@ export default function BestsellerSection() {
 
             return (
               <div key={product.id} className="col-lg-6 col-xl-4">
-                <div className="p-4 rounded bg-white shadow-sm border h-100">
+                <div className="p-4 rounded bg-white shadow-sm border h-100 position-relative overflow-hidden">
+                  {/* 🔹 Badge giảm giá */}
+                  {product.discount ? (
+                    <span
+                      className="position-absolute bg-danger text-white fw-bold px-2 py-1 rounded"
+                      style={{ top: "10px", right: "10px", fontSize: "0.8rem", zIndex: 10 }}
+                    >
+                      -{product.discount}%
+                    </span>
+                  ) : null}
+
                   <div className="row align-items-center">
                     {/* Ảnh sản phẩm */}
                     <div className="col-6">
-                      <div className="position-relative">
-                        {product.discount ? (
-                          <span
-                            className="position-absolute bg-danger text-white fw-bold px-2 py-1 rounded"
-                            style={{ top: "10px", right: "10px", fontSize: "0.8rem" }}
-                          >
-                            -{product.discount}%
-                          </span>
-                        ) : null}
-
-                        <img
-                          src={
-                            product.fileKey
-                              ? `/uploads/${product.fileKey}`
-                              : "/img/placeholder.png"
-                          }
-                          className="img-fluid rounded-circle w-100 border"
-                          alt={product.name}
-                          style={{
-                            height: "180px",
-                            objectFit: "cover",
-                          }}
-                        />
-                      </div>
+                      <img
+                        src={productImages[product.id] || "/img/placeholder.png"}
+                        className="img-fluid rounded-circle w-100 border"
+                        alt={product.name}
+                        style={{
+                          height: "180px",
+                          objectFit: "cover",
+                        }}
+                      />
                     </div>
 
-                    {/* Nội dung */}
+                    {/* Nội dung sản phẩm */}
                     <div className="col-6">
                       <h5 className="fw-bold text-dark text-truncate">{product.name}</h5>
                       <div className="d-flex my-2">{renderStars(product.rating)}</div>

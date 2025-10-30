@@ -1,49 +1,61 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../../store";
 import {
   removeFromCart,
-  clearCart,
   updateQuantity,
+  updateVariant,
 } from "../store/cartSlice";
-
 
 export default function Cart() {
   const items = useSelector((s: RootState) => s.cart.items);
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const [images, setImages] = useState<Record<string, string>>({});
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  // 🔹 Load ảnh sản phẩm (chuẩn hóa URL)
+  useEffect(() => {
+    if (!items || items.length === 0) return;
+
+    const imageMap: Record<string, string> = {};
+    const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+
+    for (const it of items) {
+      const key = `${it.productId}-${it.variantId}-${it.sizeId}`;
+
+      if (
+        it.image?.startsWith("http") ||
+        it.image?.startsWith("blob:") ||
+        it.image?.includes("/img/")
+      ) {
+        imageMap[key] = it.image;
+      } else if (it.image) {
+        // ✅ Sử dụng API media chuẩn (đảm bảo hoạt động với fileKey)
+        imageMap[key] = `${baseUrl}/media/viewFileKeyForProduct/${it.image}`;
+      } else {
+        imageMap[key] = "/img/placeholder.png";
+      }
+    }
+    setImages(imageMap);
+  }, [items]);
+
   const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
+  const handleCheckout = () => navigate("/checkout");
 
-  // const handleCheckout = async () => {
-  //   try {
-  //     await api.post("/purchase", { items });
-  //     alert("✅ Checkout thành công!");
-  //     dispatch(clearCart());
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert("❌ Checkout thất bại. Kiểm tra backend.");
-  //   }
-  // };
-  const navigate = useNavigate();
-  const handleCheckout = () => {
-    navigate("/checkout");
-  };
-
-  // 👉 Nếu không có sản phẩm, hiển thị thông báo
-  if (!items || items.length === 0) {
+  if (!items?.length) {
     return (
       <div
-        className="container py-5 text-center"
+        className="container text-center"
         style={{
           background: "#f8f9fa",
           borderRadius: "12px",
           padding: "40px",
-          marginTop: "120px",         
+          marginTop: "120px", // ✅ Đẩy xuống tránh bị che
         }}
       >
         <h3 className="fw-bold text-danger mb-3">Không có sản phẩm nào</h3>
@@ -51,8 +63,8 @@ export default function Cart() {
       </div>
     );
   }
+  
 
-  // 👉 Khi có sản phẩm
   return (
     <div className="container py-5">
       <h2 className="fw-bold text-primary mb-4">Giỏ hàng của bạn</h2>
@@ -70,54 +82,139 @@ export default function Cart() {
             </tr>
           </thead>
           <tbody>
-            {items.map((it) => (
-              <tr key={it.id}>
+            {items.map((it, index) => (
+              <tr key={`${it.productId}-${it.variantId}-${it.sizeId}-${index}`}>
                 <td>
                   <img
-                    src={it.image}
+                    src={
+                      images[`${it.productId}-${it.variantId}-${it.sizeId}`] ||
+                      "/img/placeholder.png"
+                    }
                     alt={it.name}
                     style={{ width: 60, height: 60, objectFit: "cover" }}
                     className="rounded"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "/img/placeholder.png";
+                    }}
                   />
                 </td>
-                <td className="fw-semibold">{it.name}</td>
+                <td>
+                  <div className="fw-semibold">{it.name}</div>
+
+                  <div className="mt-2">
+                    <div className="d-flex gap-3 flex-wrap align-items-center">
+                      {/* Màu */}
+                      <div>
+                        <label className="small text-muted me-2">Màu:</label>
+                        <select
+                          value={it.color}
+                          className="form-select form-select-sm d-inline-block w-auto"
+                          onChange={(e) =>
+                            dispatch(
+                              updateVariant({
+                                productId: it.productId,
+                                oldVariantId: it.variantId,
+                                oldSizeId: it.sizeId,
+                                newColor: e.target.value,
+                              })
+                            )
+                          }
+                        >
+                          {it.availableColors?.map((v) => (
+                            <option key={v.id} value={v.color}>
+                              {v.color}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Size */}
+                      <div>
+                        <label className="small text-muted me-2">Size:</label>
+                        <select
+                          value={it.size}
+                          className="form-select form-select-sm d-inline-block w-auto"
+                          onChange={(e) =>
+                            dispatch(
+                              updateVariant({
+                                productId: it.productId,
+                                oldVariantId: it.variantId,
+                                oldSizeId: it.sizeId,
+                                newSize: e.target.value,
+                              })
+                            )
+                          }
+                        >
+                          {it.availableSizes?.map((s) => (
+                            <option key={s.id} value={s.size}>
+                              {s.size}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </td>
                 <td>{it.price.toLocaleString()}₫</td>
+
                 <td>
                   <div className="d-flex align-items-center">
                     <button
+                      type="button"
                       className="btn btn-sm btn-outline-secondary"
                       onClick={() =>
                         dispatch(
                           updateQuantity({
-                            id: it.id,
+                            productId: it.productId,
+                            variantId: it.variantId,
+                            sizeId: it.sizeId,
                             quantity: it.quantity - 1,
                           })
                         )
                       }
+                      disabled={it.quantity <= 1}
                     >
                       -
                     </button>
                     <span className="px-3">{it.quantity}</span>
                     <button
+                      type="button"
                       className="btn btn-sm btn-outline-secondary"
                       onClick={() =>
                         dispatch(
                           updateQuantity({
-                            id: it.id,
-                            quantity: it.quantity + 1,
+                            productId: it.productId,
+                            variantId: it.variantId,
+                            sizeId: it.sizeId,
+                            quantity: Math.min(
+                              it.quantity + 1,
+                              it.maxStock
+                            ),
                           })
                         )
                       }
+                      disabled={it.quantity >= it.maxStock}
                     >
                       +
                     </button>
                   </div>
                 </td>
+
                 <td>{(it.price * it.quantity).toLocaleString()}₫</td>
+
                 <td>
                   <button
                     className="btn btn-sm btn-outline-danger"
-                    onClick={() => dispatch(removeFromCart(it.id))}
+                    onClick={() =>
+                      dispatch(
+                        removeFromCart({
+                          productId: it.productId,
+                          variantId: it.variantId,
+                          sizeId: it.sizeId,
+                        })
+                      )
+                    }
                   >
                     Xóa
                   </button>

@@ -94,4 +94,9 @@ export const getMediaByFileKey = (filekey: string) =>
     responseType: "blob",
   });
 
+  export const getMediaProductByFileKey = (filekey: string) =>
+    api.get(`/media/viewFileKeyForProduct/${filekey}`, {
+      responseType: "blob",
+    });  
+
 export { userApi, adminApi };
