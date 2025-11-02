@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   getCategoryByIsShow,
   getProductByCategoryId,
@@ -73,6 +74,24 @@ export default function ProductSection() {
           results.forEach(({ id, url }) => (imageMap[id] = url));
           setProductImages(imageMap);
         }
+
+        // 🔹 Mặc định chọn màu & size đầu tiên (nếu có)
+        const defaultVariants: Record<number, any> = {};
+        const defaultSizes: Record<number, any> = {};
+
+        data.forEach((p: any) => {
+          if (p.variants?.length > 0) {
+            const firstVariant = p.variants[0];
+            defaultVariants[p.id] = firstVariant;
+
+            if (firstVariant.sizes?.length > 0) {
+              defaultSizes[p.id] = firstVariant.sizes[0];
+            }
+          }
+        });
+
+        setSelectedVariants(defaultVariants);
+        setSelectedSizes(defaultSizes);
       } catch (err) {
         console.error("❌ Lỗi khi tải sản phẩm:", err);
       } finally {
@@ -106,8 +125,13 @@ export default function ProductSection() {
     const selectedVariant = selectedVariants[product.id];
     const selectedSize = selectedSizes[product.id];
 
-    if (!selectedVariant || !selectedSize) {
-      alert("⚠️ Vui lòng chọn màu và size trước khi thêm vào giỏ hàng!");
+    if (!selectedVariant) {
+      alert("⚠️ Vui lòng chọn màu sản phẩm!");
+      return;
+    }
+
+    if (!selectedSize) {
+      alert("⚠️ Vui lòng chọn size sản phẩm!");
       return;
     }
 
@@ -196,18 +220,27 @@ export default function ProductSection() {
               return (
                 <div key={product.id} className="col-md-6 col-lg-3">
                   <div className="border rounded bg-light p-3 h-100 d-flex flex-column">
-                    <img
-                      src={productImages[product.id] || "/img/placeholder.png"}
-                      className="img-fluid rounded mb-3"
-                      alt={product.name}
-                      style={{ height: "250px", objectFit: "cover" }}
-                      onError={(e) =>
-                        ((e.target as HTMLImageElement).src = "/img/placeholder.png")
-                      }
-                    />
+                    {/* Ảnh sản phẩm */}
+                    <Link to={`/products/${product.id}`} className="text-decoration-none">
+                      <img
+                        src={productImages[product.id] || "/img/placeholder.png"}
+                        className="img-fluid rounded mb-3"
+                        alt={product.name}
+                        style={{ height: "250px", objectFit: "cover" }}
+                        onError={(e) =>
+                          ((e.target as HTMLImageElement).src = "/img/placeholder.png")
+                        }
+                      />
+                    </Link>
 
+                    {/* Tên */}
                     <h5 className="fw-bold text-dark text-truncate">
-                      {product.name}
+                      <Link
+                        to={`/products/${product.id}`}
+                        className="text-dark text-decoration-none"
+                      >
+                        {product.name}
+                      </Link>
                     </h5>
                     <p className="text-muted small mb-2 text-truncate">
                       {product.description}
@@ -230,10 +263,13 @@ export default function ProductSection() {
                                 ...prev,
                                 [product.id]: v,
                               }));
-                              setSelectedSizes((prev) => ({
-                                ...prev,
-                                [product.id]: null,
-                              }));
+                              // Chọn luôn size đầu tiên của màu mới
+                              if (v.sizes?.length > 0) {
+                                setSelectedSizes((prev) => ({
+                                  ...prev,
+                                  [product.id]: v.sizes[0],
+                                }));
+                              }
                             }}
                           >
                             {v.color}
