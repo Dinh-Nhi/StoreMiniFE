@@ -1,51 +1,46 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
 import { addToCart } from "../../cart/store/cartSlice";
 import { type AppDispatch } from "../../../store";
-import { getBestSellingProducts, getMediaProductByFileKey } from "../../../helper/api";
+import {
+  getBestSellingProducts,
+  getMediaProductByFileKey,
+} from "../../../helper/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-type BestsellerProduct = {
-  id: number;
-  name: string;
-  basePrice: number;
-  discount?: number; // %
-  fileKey?: string;
-  rating?: number;
-  description?: string;
-};
-
 export default function BestsellerSection() {
   const dispatch = useDispatch<AppDispatch>();
-  const [products, setProducts] = useState<BestsellerProduct[]>([]);
-  const [productImages, setProductImages] = useState<{ [key: number]: string }>({});
+  const [products, setProducts] = useState<any[]>([]);
+  const [productImages, setProductImages] = useState<Record<number, string>>({});
+  const [selectedVariants, setSelectedVariants] = useState<Record<number, any>>({});
+  const [selectedSizes, setSelectedSizes] = useState<Record<number, any>>({});
   const [loading, setLoading] = useState(true);
+  const createdUrls = useRef<string[]>([]);
 
-  // 🔹 Lấy danh sách sản phẩm bán chạy + tải ảnh theo fileKey
   useEffect(() => {
     let isMounted = true;
 
     const fetchBestSelling = async () => {
+      setLoading(true);
       try {
         const res = await getBestSellingProducts(6);
         const data = res?.data || [];
         if (!isMounted) return;
-
         setProducts(data);
 
-        // ✅ Tải ảnh song song
+        // ✅ Load ảnh sản phẩm
         const imageMap: Record<number, string> = {};
         const results = await Promise.all(
-          data.map(async (p: BestsellerProduct) => {
+          data.map(async (p: any) => {
             if (p.fileKey) {
               try {
                 const res = await getMediaProductByFileKey(p.fileKey);
                 const blob = res.data;
                 const url = URL.createObjectURL(blob);
                 return { id: p.id, url };
-              } catch (error) {
-                console.warn(`⚠️ Không tải được ảnh sản phẩm ID ${p.id}`);
+              } catch {
                 return { id: p.id, url: "/img/placeholder.png" };
               }
             } else {
@@ -56,6 +51,19 @@ export default function BestsellerSection() {
 
         results.forEach(({ id, url }) => (imageMap[id] = url));
         if (isMounted) setProductImages(imageMap);
+
+        // ✅ Mặc định chọn màu và size
+        const defaultVariants: Record<number, any> = {};
+        const defaultSizes: Record<number, any> = {};
+        data.forEach((p: any) => {
+          if (p.variants?.length > 0) {
+            const fv = p.variants[0];
+            defaultVariants[p.id] = fv;
+            defaultSizes[p.id] = fv.sizes?.[0] || null;
+          }
+        });
+        setSelectedVariants(defaultVariants);
+        setSelectedSizes(defaultSizes);
       } catch (err) {
         console.error("❌ Lỗi khi tải sản phẩm bán chạy:", err);
       } finally {
@@ -67,23 +75,53 @@ export default function BestsellerSection() {
 
     return () => {
       isMounted = false;
-      Object.values(productImages).forEach((url) => URL.revokeObjectURL(url));
+      createdUrls.current.forEach((u) => URL.revokeObjectURL(u));
+      createdUrls.current = [];
     };
   }, []);
 
-  // 🔹 Xử lý thêm vào giỏ hàng
-  const handleAddToCart = (product: BestsellerProduct) => {
-    const finalPrice = Math.round(
-      product.basePrice * (1 - (product.discount || 0) / 100)
-    );
+  // ✅ Thêm vào giỏ hàng
+  const handleAddToCart = (product: any) => {
+    const selectedVariant = selectedVariants[product.id];
+    const selectedSize = selectedSizes[product.id];
+
+    if (!selectedVariant) {
+      toast.warning("⚠️ Vui lòng chọn màu sản phẩm!");
+      return;
+    }
+    if (!selectedSize) {
+      toast.warning("⚠️ Vui lòng chọn size sản phẩm!");
+      return;
+    }
+
+    const discount = product.discount ?? 0;
+    const finalPrice = Math.round(product.basePrice * (1 - discount / 100));
+    const variantImage =
+      selectedVariant.image || productImages[product.id] || "/img/placeholder.png";
 
     dispatch(
       addToCart({
-        id: product.id,
+        productId: product.id,
         name: product.name,
+        image: variantImage,
+        variantId: selectedVariant.id,
+        color: selectedVariant.color,
+        size: selectedSize.size,
+        sizeId: selectedSize.id,
         price: finalPrice,
         quantity: 1,
-        image: productImages[product.id] || "/img/placeholder.png",
+        maxStock: selectedSize.stock ?? 999,
+        availableColors: product.variants?.map((v: any) => ({
+          id: v.id,
+          color: v.color,
+          sizes: v.sizes,
+          price: v.price,
+        })),
+        availableSizes: selectedVariant.sizes?.map((s: any) => ({
+          id: s.id,
+          size: s.size,
+          stock: s.stock,
+        })),
       })
     );
 
@@ -94,36 +132,8 @@ export default function BestsellerSection() {
     });
   };
 
-  // 🔹 Format giá tiền
-  const formatCurrency = (value: number) =>
-    value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
-
-  // 🔹 Render sao đánh giá
-  const renderStars = (rating: number = 4) => {
-    return Array.from({ length: 5 }, (_, index) => (
-      <i
-        key={index}
-        className={`fas fa-star ${index < rating ? "text-primary" : "text-muted"}`}
-      ></i>
-    ));
-  };
-
-  if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border text-primary" role="status"></div>
-        <p className="mt-3">Đang tải sản phẩm bán chạy...</p>
-      </div>
-    );
-  }
-
-  if (products.length === 0) {
-    return (
-      <div className="text-center py-5">
-        <p>Hiện chưa có sản phẩm bán chạy nào.</p>
-      </div>
-    );
-  }
+  const formatCurrency = (v: number) =>
+    v.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 
   return (
     <div className="container-fluid py-5 bg-light">
@@ -135,68 +145,151 @@ export default function BestsellerSection() {
           </p>
         </div>
 
-        <div className="row g-4">
-          {products.map((product) => {
-            const discountedPrice = Math.round(
-              product.basePrice * (1 - (product.discount || 0) / 100)
-            );
+        {loading ? (
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" />
+          </div>
+        ) : (
+          <div className="row g-4">
+            {products.map((product) => {
+              const img = productImages[product.id] || "/img/placeholder.png";
+              const variants = product.variants || [];
+              const selectedVariant = selectedVariants[product.id];
+              const sizes = selectedVariant?.sizes || [];
+              const selectedSize = selectedSizes[product.id];
+              const discount = product.discount ?? 0;
+              const discountedPrice = Math.round(
+                product.basePrice * (1 - discount / 100)
+              );
 
-            return (
-              <div key={product.id} className="col-lg-6 col-xl-4">
-                <div className="p-4 rounded bg-white shadow-sm border h-100 position-relative overflow-hidden">
-                  {/* 🔹 Badge giảm giá */}
-                  {product.discount ? (
-                    <span
-                      className="position-absolute bg-danger text-white fw-bold px-2 py-1 rounded"
-                      style={{ top: "10px", right: "10px", fontSize: "0.8rem", zIndex: 10 }}
-                    >
-                      -{product.discount}%
-                    </span>
-                  ) : null}
+              return (
+                <div key={product.id} className="col-lg-6 col-xl-4">
+                  <div className="p-4 rounded bg-white shadow-sm border h-100 position-relative overflow-hidden">
+                    {discount > 0 && (
+                      <span
+                        className="position-absolute bg-danger text-white fw-bold px-2 py-1 rounded"
+                        style={{ top: 10, right: 10, fontSize: "0.8rem" }}
+                      >
+                        -{discount}%
+                      </span>
+                    )}
 
-                  <div className="row align-items-center">
-                    {/* Ảnh sản phẩm */}
-                    <div className="col-6">
-                      <img
-                        src={productImages[product.id] || "/img/placeholder.png"}
-                        className="img-fluid rounded-circle w-100 border"
-                        alt={product.name}
-                        style={{
-                          height: "180px",
-                          objectFit: "cover",
-                        }}
-                      />
+                    {/* 🔹 Link chi tiết bao quanh ảnh */}
+                    <div className="text-center mb-3">
+                      <Link to={`/products/${product.id}`}>
+                        <img
+                          src={img}
+                          alt={product.name}
+                          className="img-fluid rounded-circle border"
+                          style={{
+                            height: "180px",
+                            width: "180px",
+                            objectFit: "cover",
+                            transition: "transform 0.3s",
+                          }}
+                          onError={(e) =>
+                            ((e.target as HTMLImageElement).src = "/img/placeholder.png")
+                          }
+                        />
+                      </Link>
                     </div>
 
-                    {/* Nội dung sản phẩm */}
-                    <div className="col-6">
-                      <h5 className="fw-bold text-dark text-truncate">{product.name}</h5>
-                      <div className="d-flex my-2">{renderStars(product.rating)}</div>
+                    {/* 🔹 Tên sản phẩm có link */}
+                    <h5 className="fw-bold text-dark text-center text-truncate">
+                      <Link
+                        to={`/products/${product.id}`}
+                        className="text-decoration-none text-dark"
+                      >
+                        {product.name}
+                      </Link>
+                    </h5>
 
-                      <div className="d-flex flex-column mb-3">
-                        <span className="text-danger fw-bold">
+                    <p className="text-muted small text-center text-truncate">
+                      {product.description || "Không có mô tả."}
+                    </p>
+
+                    {/* Màu */}
+                    {variants.length > 0 && (
+                      <div className="text-center mb-2">
+                        <span className="small text-muted me-2">Màu:</span>
+                        {variants.map((v: any) => (
+                          <button
+                            key={v.id}
+                            className={`btn btn-sm me-2 mb-2 ${
+                              selectedVariant?.id === v.id
+                                ? "btn-primary text-white"
+                                : "btn-outline-primary"
+                            }`}
+                            onClick={() => {
+                              setSelectedVariants((prev) => ({
+                                ...prev,
+                                [product.id]: v,
+                              }));
+                              if (v.sizes?.length > 0) {
+                                setSelectedSizes((prev) => ({
+                                  ...prev,
+                                  [product.id]: v.sizes[0],
+                                }));
+                              }
+                            }}
+                          >
+                            {v.color}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Size */}
+                    {sizes.length > 0 && (
+                      <div className="text-center mb-3">
+                        <span className="small text-muted me-2">Size:</span>
+                        {sizes.map((s: any) => (
+                          <button
+                            key={s.id}
+                            className={`btn btn-sm me-2 mb-2 ${
+                              selectedSize?.id === s.id
+                                ? "btn-success text-white"
+                                : "btn-outline-success"
+                            }`}
+                            onClick={() =>
+                              setSelectedSizes((prev) => ({
+                                ...prev,
+                                [product.id]: s,
+                              }))
+                            }
+                          >
+                            {s.size}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Giá và nút mua */}
+                    <div className="d-flex justify-content-between align-items-center px-2 mt-2">
+                      <div>
+                        <div className="text-danger fw-bold">
                           {formatCurrency(discountedPrice)}
-                        </span>
-                        {product.discount ? (
-                          <small className="text-muted text-decoration-line-through">
+                        </div>
+                        {discount > 0 && (
+                          <div className="text-muted text-decoration-line-through small">
                             {formatCurrency(product.basePrice)}
-                          </small>
-                        ) : null}
+                          </div>
+                        )}
                       </div>
 
                       <button
                         onClick={() => handleAddToCart(product)}
                         className="btn btn-outline-primary rounded-pill px-3"
                       >
-                        <i className="fa fa-shopping-bag me-2"></i> Mua ngay
+                        <i className="fa fa-shopping-bag me-2"></i>Mua ngay
                       </button>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
