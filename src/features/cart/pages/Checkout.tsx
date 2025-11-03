@@ -6,11 +6,13 @@ import { orderService } from "../../../helper/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import type { OrderRequest } from "../../../types/order";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function Checkout() {
   const items = useSelector((s: RootState) => s.cart.items);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const { user } = useAuth(); // ✅ Lấy thông tin user từ AuthContext
 
   const [form, setForm] = useState({
     name: "",
@@ -21,20 +23,31 @@ export default function Checkout() {
 
   const [images, setImages] = useState<Record<string, string>>({});
 
+  // ✅ Gán họ tên tự động khi user thay đổi
+  useEffect(() => {
+    if (user?.userName) {
+      setForm((prev) => ({ ...prev, name: user.fullName || "" }));
+    }
+  }, [user]);
+
+  // ✅ Kiểm tra đăng nhập
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.warning("🔒 Vui lòng đăng nhập để tiếp tục thanh toán!");
+      navigate("/login?redirectTo=/checkout");
+    }
+  }, [navigate]);
 
-  // 🔹 Load ảnh sản phẩm (chuẩn như Cart.tsx)
+  // ✅ Load ảnh sản phẩm
   useEffect(() => {
     if (!items || items.length === 0) return;
-
     const imageMap: Record<string, string> = {};
     const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
 
     for (const it of items) {
       const key = `${it.productId}-${it.variantId}-${it.sizeId}`;
-
       if (
         it.image?.startsWith("http") ||
         it.image?.startsWith("blob:") ||
@@ -42,7 +55,6 @@ export default function Checkout() {
       ) {
         imageMap[key] = it.image;
       } else if (it.image) {
-        // ✅ Sử dụng API media chuẩn
         imageMap[key] = `${baseUrl}/media/viewFileKeyForProduct/${it.image}`;
       } else {
         imageMap[key] = "/img/placeholder.png";
@@ -76,8 +88,6 @@ export default function Checkout() {
         })),
       };
 
-      console.log(orderPayload)
-
       if (form.paymentMethod === "COD") {
         const orderRes = await orderService.createOrder(orderPayload);
         toast.success("🎉 Đặt hàng thành công!");
@@ -98,6 +108,7 @@ export default function Checkout() {
     }
   };
 
+  // 🛒 Nếu giỏ hàng trống
   if (!items.length) {
     return (
       <div
@@ -222,10 +233,7 @@ export default function Checkout() {
                       width={60}
                       height={60}
                       className="rounded"
-                      style={{
-                        objectFit: "cover",
-                        marginRight: "10px",
-                      }}
+                      style={{ objectFit: "cover", marginRight: "10px" }}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
                           "/img/placeholder.png";
@@ -237,8 +245,7 @@ export default function Checkout() {
                         Màu: {it.color || "—"} | Size: {it.size || "—"}
                       </small>
                       <div>
-                        SL: {it.quantity} ×{" "}
-                        {it.price.toLocaleString()}₫
+                        SL: {it.quantity} × {it.price.toLocaleString()}₫
                       </div>
                     </div>
                     <div className="fw-bold text-end" style={{ minWidth: 80 }}>

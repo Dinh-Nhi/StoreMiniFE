@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../../store";
 import {
@@ -45,7 +46,17 @@ export default function Cart() {
   }, [items]);
 
   const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
-  const handleCheckout = () => navigate("/checkout");
+  const handleCheckout = () => {
+    const token = localStorage.getItem("token");
+  
+    if (!token) {
+      toast.warning("🔒 Bạn cần đăng nhập để tiếp tục thanh toán!");
+      navigate("/login?redirectTo=/checkout");
+      return;
+    }
+  
+    navigate("/checkout");
+  };
 
   if (!items?.length) {
     return (

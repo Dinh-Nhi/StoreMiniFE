@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { login } from "../../../helper/api";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -8,7 +8,16 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login: loginAuth } = useAuth(); 
+  const location = useLocation();
+  const { login: loginAuth } = useAuth();
+
+  // ✅ Lấy redirectTo từ query string (nếu có)
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const redirect = params.get("redirectTo");
+    setRedirectTo(redirect);
+  }, [location.search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,10 +40,17 @@ export default function Login() {
       const token = res.data?.data ?? null;
 
       if (token) {
+        // ✅ Gọi context lưu token (AuthContext sẽ set localStorage)
         loginAuth(token);
 
         alert("Đăng nhập thành công!");
-        navigate("/");
+
+        // 🔹 Nếu có redirectTo => quay lại trang đó, ngược lại về "/"
+        if (redirectTo) {
+          navigate(redirectTo);
+        } else {
+          navigate("/");
+        }
       } else {
         alert("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin đăng nhập.");
       }
