@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       setUser({
-        // fullName: payload.fullName,
+        fullName: payload.fullName || "",
         userName: payload.userName,
         email: payload.email,
       });

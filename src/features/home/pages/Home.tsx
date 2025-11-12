@@ -3,7 +3,7 @@ import BestsellerSection from "../components/ProductBestseller";
 import VegetableCarousel from "../components/ProductDiscount";
 import { useStoreInfo } from "../../../context/StoreInfoContext";
 import ProductsSection from "../components/ProductCollection";
-import { getMediaByFileKey } from "../../../helper/api";
+import { getMediaByFileKey, getMediaProductByFileKey } from "../../../helper/api";
 
 interface Banner {
   id: number;

@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../../store";
 import { removeFromCart, clearCart, updateQuantity } from "../store/cartSlice";
@@ -7,33 +8,56 @@ import { removeFromCart, clearCart, updateQuantity } from "../store/cartSlice";
 export default function Cart() {
   const items = useSelector((s: RootState) => s.cart.items);
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const [images, setImages] = useState<Record<string, string>>({});
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
+  // 🔹 Load ảnh sản phẩm (chuẩn hóa URL)
+  useEffect(() => {
+    if (!items || items.length === 0) return;
 
-  // const handleCheckout = async () => {
-  //   try {
-  //     await api.post("/purchase", { items });
-  //     alert("✅ Checkout thành công!");
-  //     dispatch(clearCart());
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert("❌ Checkout thất bại. Kiểm tra backend.");
-  //   }
-  // };
-  const navigate = useNavigate();
+    const imageMap: Record<string, string> = {};
+    const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+
+    for (const it of items) {
+      const key = `${it.productId}-${it.variantId}-${it.sizeId}`;
+
+      if (
+        it.image?.startsWith("http") ||
+        it.image?.startsWith("blob:") ||
+        it.image?.includes("/img/")
+      ) {
+        imageMap[key] = it.image;
+      } else if (it.image) {
+        // ✅ Sử dụng API media chuẩn (đảm bảo hoạt động với fileKey)
+        imageMap[key] = `${baseUrl}/media/viewFileKeyForProduct/${it.image}`;
+      } else {
+        imageMap[key] = "/img/placeholder.png";
+      }
+    }
+    setImages(imageMap);
+  }, [items]);
+
+  const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
   const handleCheckout = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast.warning("🔒 Bạn cần đăng nhập để tiếp tục thanh toán!");
+      navigate("/login?redirectTo=/checkout");
+      return;
+    }
+
     navigate("/checkout");
   };
 
-  // 👉 Nếu không có sản phẩm, hiển thị thông báo
-  if (!items || items.length === 0) {
+  if (!items?.length) {
     return (
       <div
-        className="container py-5 text-center"
+        className="container text-center"
         style={{
           background: "#f8f9fa",
           borderRadius: "12px",
@@ -47,7 +71,6 @@ export default function Cart() {
     );
   }
 
-  // 👉 Khi có sản phẩm
   return (
     <div className="container py-5">
       <h2 className="fw-bold text-primary mb-4">Giỏ hàng của bạn</h2>
@@ -67,45 +90,71 @@ export default function Cart() {
           <tbody>
             {items.map((it) => (
               <tr key={it.id}>
-                <td></td>
+                <td>
+                  <img
+                    src={it.image}
+                    alt={it.name}
+                    style={{ width: 60, height: 60, objectFit: "cover" }}
+                    className="rounded"
+                  />
+                </td>
                 <td className="fw-semibold">{it.name}</td>
                 <td>{it.price.toLocaleString()}₫</td>
+
                 <td>
                   <div className="d-flex align-items-center">
                     <button
+                      type="button"
                       className="btn btn-sm btn-outline-secondary"
                       onClick={() =>
                         dispatch(
                           updateQuantity({
-                            id: it.id,
+                            productId: it.productId,
+                            variantId: it.variantId,
+                            sizeId: it.sizeId,
                             quantity: it.quantity - 1,
                           })
                         )
                       }
+                      disabled={it.quantity <= 1}
                     >
                       -
                     </button>
                     <span className="px-3">{it.quantity}</span>
                     <button
+                      type="button"
                       className="btn btn-sm btn-outline-secondary"
                       onClick={() =>
                         dispatch(
                           updateQuantity({
-                            id: it.id,
-                            quantity: it.quantity + 1,
+                            productId: it.productId,
+                            variantId: it.variantId,
+                            sizeId: it.sizeId,
+                            quantity: Math.min(it.quantity + 1, it.maxStock),
                           })
                         )
                       }
+                      disabled={it.quantity >= it.maxStock}
                     >
                       +
                     </button>
                   </div>
                 </td>
+
                 <td>{(it.price * it.quantity).toLocaleString()}₫</td>
+
                 <td>
                   <button
                     className="btn btn-sm btn-outline-danger"
-                    onClick={() => dispatch(removeFromCart(it.id))}
+                    onClick={() =>
+                      dispatch(
+                        removeFromCart({
+                          productId: it.productId,
+                          variantId: it.variantId,
+                          sizeId: it.sizeId,
+                        })
+                      )
+                    }
                   >
                     Xóa
                   </button>
