@@ -76,7 +76,7 @@ export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <div className="container-fluid py-5 mb-5 hero-header">
+      <div className="container-fluid   hero-header">
         <div className="container-fluid p-0">
           <div
             id="heroCarousel"
@@ -98,14 +98,15 @@ export default function Home() {
                       alt={banner.name || "Banner"}
                       style={{
                         objectFit: "cover",
-                        height: "500px", // Adjust height as needed
-                        maxHeight: "100vh",
+                        height: "450px", // 👈 giảm từ 500px xuống 380px
+                        maxHeight: "90vh",
+                        borderRadius: "10px",
                       }}
                     />
                   ) : (
                     <div
                       className="bg-light text-center rounded d-flex align-items-center justify-content-center"
-                      style={{ height: "500px" }}
+                      style={{ height: "380px" }} // 👈 đồng bộ với chiều cao ảnh
                     >
                       Đang tải ảnh...
                     </div>

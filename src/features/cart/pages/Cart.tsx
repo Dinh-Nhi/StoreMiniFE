@@ -2,12 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../../store";
-import {
-  removeFromCart,
-  clearCart,
-  updateQuantity,
-} from "../store/cartSlice";
-
+import { removeFromCart, clearCart, updateQuantity } from "../store/cartSlice";
 
 export default function Cart() {
   const items = useSelector((s: RootState) => s.cart.items);
@@ -43,7 +38,7 @@ export default function Cart() {
           background: "#f8f9fa",
           borderRadius: "12px",
           padding: "40px",
-          marginTop: "120px",         
+          marginTop: "120px",
         }}
       >
         <h3 className="fw-bold text-danger mb-3">Không có sản phẩm nào</h3>
@@ -57,7 +52,7 @@ export default function Cart() {
     <div className="container py-5">
       <h2 className="fw-bold text-primary mb-4">Giỏ hàng của bạn</h2>
 
-      <div className="table-responsive" style={{padding : "inherit"}}>
+      <div className="table-responsive" style={{ padding: "inherit" }}>
         <table className="table align-middle">
           <thead className="table-light">
             <tr>
@@ -72,14 +67,7 @@ export default function Cart() {
           <tbody>
             {items.map((it) => (
               <tr key={it.id}>
-                <td>
-                  <img
-                    src={it.image}
-                    alt={it.name}
-                    style={{ width: 60, height: 60, objectFit: "cover" }}
-                    className="rounded"
-                  />
-                </td>
+                <td></td>
                 <td className="fw-semibold">{it.name}</td>
                 <td>{it.price.toLocaleString()}₫</td>
                 <td>
