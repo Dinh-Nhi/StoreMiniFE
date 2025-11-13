@@ -3,11 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../../store";
-import {
-  removeFromCart,
-  updateQuantity,
-  updateVariant,
-} from "../store/cartSlice";
+import { removeFromCart, clearCart, updateQuantity } from "../store/cartSlice";
 
 export default function Cart() {
   const items = useSelector((s: RootState) => s.cart.items);
@@ -48,13 +44,13 @@ export default function Cart() {
   const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
   const handleCheckout = () => {
     const token = localStorage.getItem("token");
-  
+
     if (!token) {
       toast.warning("🔒 Bạn cần đăng nhập để tiếp tục thanh toán!");
       navigate("/login?redirectTo=/checkout");
       return;
     }
-  
+
     navigate("/checkout");
   };
 
@@ -66,7 +62,7 @@ export default function Cart() {
           background: "#f8f9fa",
           borderRadius: "12px",
           padding: "40px",
-          marginTop: "120px", // ✅ Đẩy xuống tránh bị che
+          marginTop: "120px",
         }}
       >
         <h3 className="fw-bold text-danger mb-3">Không có sản phẩm nào</h3>
@@ -74,13 +70,12 @@ export default function Cart() {
       </div>
     );
   }
-  
 
   return (
     <div className="container py-5">
       <h2 className="fw-bold text-primary mb-4">Giỏ hàng của bạn</h2>
 
-      <div className="table-responsive" style={{padding : "inherit"}}>
+      <div className="table-responsive" style={{ padding: "inherit" }}>
         <table className="table align-middle">
           <thead className="table-light">
             <tr>
@@ -93,80 +88,17 @@ export default function Cart() {
             </tr>
           </thead>
           <tbody>
-            {items.map((it, index) => (
-              <tr key={`${it.productId}-${it.variantId}-${it.sizeId}-${index}`}>
+            {items.map((it) => (
+              <tr key={it.id}>
                 <td>
                   <img
-                    src={
-                      images[`${it.productId}-${it.variantId}-${it.sizeId}`] ||
-                      "/img/placeholder.png"
-                    }
+                    src={it.image}
                     alt={it.name}
                     style={{ width: 60, height: 60, objectFit: "cover" }}
                     className="rounded"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        "/img/placeholder.png";
-                    }}
                   />
                 </td>
-                <td>
-                  <div className="fw-semibold">{it.name}</div>
-
-                  <div className="mt-2">
-                    <div className="d-flex gap-3 flex-wrap align-items-center">
-                      {/* Màu */}
-                      <div>
-                        <label className="small text-muted me-2">Màu:</label>
-                        <select
-                          value={it.color}
-                          className="form-select form-select-sm d-inline-block w-auto"
-                          onChange={(e) =>
-                            dispatch(
-                              updateVariant({
-                                productId: it.productId,
-                                oldVariantId: it.variantId,
-                                oldSizeId: it.sizeId,
-                                newColor: e.target.value,
-                              })
-                            )
-                          }
-                        >
-                          {it.availableColors?.map((v) => (
-                            <option key={v.id} value={v.color}>
-                              {v.color}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Size */}
-                      <div>
-                        <label className="small text-muted me-2">Size:</label>
-                        <select
-                          value={it.size}
-                          className="form-select form-select-sm d-inline-block w-auto"
-                          onChange={(e) =>
-                            dispatch(
-                              updateVariant({
-                                productId: it.productId,
-                                oldVariantId: it.variantId,
-                                oldSizeId: it.sizeId,
-                                newSize: e.target.value,
-                              })
-                            )
-                          }
-                        >
-                          {it.availableSizes?.map((s) => (
-                            <option key={s.id} value={s.size}>
-                              {s.size}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </td>
+                <td className="fw-semibold">{it.name}</td>
                 <td>{it.price.toLocaleString()}₫</td>
 
                 <td>
@@ -198,10 +130,7 @@ export default function Cart() {
                             productId: it.productId,
                             variantId: it.variantId,
                             sizeId: it.sizeId,
-                            quantity: Math.min(
-                              it.quantity + 1,
-                              it.maxStock
-                            ),
+                            quantity: Math.min(it.quantity + 1, it.maxStock),
                           })
                         )
                       }
