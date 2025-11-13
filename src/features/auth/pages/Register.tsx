@@ -65,7 +65,7 @@ export default function Register() {
 
   return (
     <div className="container py-1">
-      <div className="row justify-content-center">
+      <div className="row justify-content-center" style={{paddingTop: "150px"}}>
         <div className="col-md-6 col-lg-5">
           <div className="bg-light p-5 rounded shadow">
             <h3 className="text-center mb-4 text-primary">Đăng ký</h3>
