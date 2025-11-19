@@ -17,7 +17,22 @@ export default function ProductCard({ id, name, price, imageUrl, category = "Fru
 
   const handleAddToCart = () => {
     const numericId = Number(id ?? Date.now());
-    dispatch(addToCart({ id: numericId, name, price, quantity: 1 }));
+    dispatch(
+      addToCart({
+        productId: numericId,
+        name,
+        price,
+        quantity: 1,
+        image: imageUrl ?? "/placeholder.png",
+        color: "Default",
+        variantId: 0,
+        size: "Default",
+        sizeId: 0,
+        maxStock: 999,
+        availableColors: [],
+        availableSizes: [],
+      })
+    );
   };
 
   return (

@@ -44,11 +44,15 @@ export const register = (data: {
 }) => userApi.post("/auth/register", data);
 
 export const getUserProducts = () => userApi.get("/products");
+
+export const getProductByCategoryId = (id: number) =>
+  userApi.get(`/products/category/${id}`);
+
+
 export const getUserProductById = (id: string) =>
   userApi.get(`/products/${id}`);
 export const getCategoryByIsShow = () => userApi.get(`/categories/getByIsShow`);
-export const getProductByCategoryId = (id: number) =>
-  userApi.get(`/products/category/${id}`);
+
 
 export const getBestSellingProducts = (limit = 10) =>
   userApi.get(`/products/best-selling?limit=${limit}`);
@@ -101,5 +105,15 @@ export const getMediaByFileKey = (filekey: string) =>
 
   export const getAllMediaByFileKey = (fileKey: string) =>
   api.get(`/media/viewAllFileKeyForProduct/${fileKey}`);
+  
+
+  // export const getUserProducts = (params: { page?: number; keyword?: string }) =>
+  //   userApi.get("/products", { params });
+  
+  // export const getProductByCategoryId = (
+  //   categoryId: number,
+  //   params: { page?: number; keyword?: string }
+  // ) => userApi.get(`/products/category/${categoryId}`, { params });
+
   
 export { userApi, adminApi };

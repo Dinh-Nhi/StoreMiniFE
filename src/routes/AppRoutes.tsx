@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Home from "../features/home/pages/Home";
 import ProductDetail from "../features/products/pages/ProductDetail";
+import ProductList from "../features/products/pages/ProductList";
 import Cart from "../features/cart/pages/Cart";
 import Checkout from "../features/cart/pages/Checkout";
 import Orders from "../features/cart/pages/Orders";
@@ -16,6 +17,7 @@ export default function AppRoutes() {
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/product" element={<ProductList />} />
         <Route path="/products/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
