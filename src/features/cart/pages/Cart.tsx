@@ -1,45 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../../store";
-import { removeFromCart, clearCart, updateQuantity } from "../store/cartSlice";
+import { removeFromCart, updateQuantity } from "../store/cartSlice";
 
 export default function Cart() {
   const items = useSelector((s: RootState) => s.cart.items);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const [images, setImages] = useState<Record<string, string>>({});
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  // 🔹 Load ảnh sản phẩm (chuẩn hóa URL)
-  useEffect(() => {
-    if (!items || items.length === 0) return;
-
-    const imageMap: Record<string, string> = {};
-    const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
-
-    for (const it of items) {
-      const key = `${it.productId}-${it.variantId}-${it.sizeId}`;
-
-      if (
-        it.image?.startsWith("http") ||
-        it.image?.startsWith("blob:") ||
-        it.image?.includes("/img/")
-      ) {
-        imageMap[key] = it.image;
-      } else if (it.image) {
-        // ✅ Sử dụng API media chuẩn (đảm bảo hoạt động với fileKey)
-        imageMap[key] = `${baseUrl}/media/viewFileKeyForProduct/${it.image}`;
-      } else {
-        imageMap[key] = "/img/placeholder.png";
-      }
-    }
-    setImages(imageMap);
-  }, [items]);
 
   const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
   const handleCheckout = () => {
@@ -89,7 +62,7 @@ export default function Cart() {
           </thead>
           <tbody>
             {items.map((it) => (
-              <tr key={it.id}>
+              <tr key={`${it.productId}-${it.variantId}-${it.sizeId}`}>
                 <td>
                   <img
                     src={it.image}

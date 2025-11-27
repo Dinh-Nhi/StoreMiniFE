@@ -3,7 +3,7 @@ import BestsellerSection from "../components/ProductBestseller";
 import VegetableCarousel from "../components/ProductDiscount";
 import { useStoreInfo } from "../../../context/StoreInfoContext";
 import ProductsSection from "../components/ProductCollection";
-import { getMediaByFileKey, getMediaProductByFileKey } from "../../../helper/api";
+import { getMediaByFileKey } from "../../../helper/api";
 
 interface Banner {
   id: number;
@@ -15,7 +15,6 @@ interface Banner {
 
 export default function Home() {
   const storeInfo = useStoreInfo();
-  const [searchQuery, setSearchQuery] = useState("");
   const [bannerImages, setBannerImages] = useState<{ [key: number]: string }>(
     {}
   );
