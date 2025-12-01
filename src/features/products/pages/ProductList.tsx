@@ -318,19 +318,25 @@ export default function ProductList() {
                           </div>
                         )}
 
-                        {/* Price & Add to cart */}
-                        <div className="d-flex justify-content-between align-items-center">
-                          <span className="fw-bold text-dark">
-                            {price.toLocaleString()}₫
-                          </span>
+                      <div className="d-flex justify-content-between align-items-center">
 
-                          <button
-                            className="btn border border-secondary rounded-pill px-3"
-                            onClick={() => handleAddToCart(product)}
-                          >
-                            <i className="fa fa-shopping-bag me-2 text-primary"></i>
-                            Mua
-                          </button>
+                      {/* Giá gốc + giá sale */}
+                      <div>
+                        <div className="text-muted text-decoration-line-through small">
+                          {product.basePrice.toLocaleString()}₫
+                        </div>
+                        <div className="fw-bold text-danger">
+                          {(product.basePrice * (1 - product.discount / 100)).toLocaleString()}₫
+                          </div>
+                        </div>
+
+                        <button
+                          className="btn border border-secondary rounded-pill px-3"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          <i className="fa fa-shopping-bag me-2 text-primary"></i>
+                          Mua
+                        </button>
                         </div>
                       </div>
                     </div>
