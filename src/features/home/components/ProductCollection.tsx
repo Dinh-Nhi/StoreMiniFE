@@ -214,8 +214,20 @@ export default function ProductSection() {
               const selectedVariant = selectedVariants[product.id];
               const sizes = selectedVariant?.sizes || [];
               const selectedSize = selectedSizes[product.id];
-              const displayPrice =
-                selectedVariant?.price || product.basePrice || 0;
+              const priceBeforeDiscount =
+              (selectedVariant && typeof selectedVariant.price !== "undefined" && selectedVariant.price !== null)
+                ? selectedVariant.price
+                : product.basePrice ?? 0;
+
+              const discountPct =
+              (selectedVariant && typeof selectedVariant.discount !== "undefined" && selectedVariant.discount !== null)
+                ? selectedVariant.discount
+                : (typeof product.discount !== "undefined" && product.discount !== null)
+                  ? product.discount
+                  : 0;
+
+              const finalPrice = Math.round(priceBeforeDiscount * (1 - discountPct / 100));
+
 
               return (
                 <div key={product.id} className="col-md-6 col-lg-3">
@@ -305,9 +317,23 @@ export default function ProductSection() {
 
                     {/* 🔹 Giá + nút mua */}
                     <div className="mt-auto d-flex justify-content-between align-items-center">
-                      <span className="text-dark fw-bold">
-                        {displayPrice.toLocaleString()}₫
-                      </span>
+                      <div>
+                        {/* Giá bán (sau giảm) */}
+                        <div className="text-danger fw-bold">
+                          {finalPrice.toLocaleString("vi-VN")}₫
+                        </div>
+
+                        {/* Giá gốc (chỉ hiện khi có giảm giá) */}
+                        {discountPct > 0 && (
+                          <div
+                            className="text-muted text-decoration-line-through"
+                            style={{ fontSize: "0.85rem" }}
+                          >
+                            {priceBeforeDiscount.toLocaleString("vi-VN")}₫
+                          </div>
+                        )}
+                      </div>
+
                       <button
                         onClick={() => handleAddToCart(product)}
                         className="btn border border-secondary rounded-pill px-3 text-primary"
