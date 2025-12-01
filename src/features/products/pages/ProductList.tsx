@@ -39,8 +39,12 @@ export default function ProductList() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [productImages, setProductImages] = useState<Record<number, string>>({});
-  const [selectedVariants, setSelectedVariants] = useState<Record<number, any>>({});
+  const [productImages, setProductImages] = useState<Record<number, string>>(
+    {}
+  );
+  const [selectedVariants, setSelectedVariants] = useState<Record<number, any>>(
+    {}
+  );
   const [selectedSizes, setSelectedSizes] = useState<Record<number, any>>({});
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -225,7 +229,12 @@ export default function ProductList() {
 
                     {/* FIXED COUNT: lấy từ allProducts */}
                     <span>
-                      ({allProducts.filter((p) => p.categoryId === cat.id).length})
+                      (
+                      {
+                        allProducts.filter((p) => p.categoryId === cat.id)
+                          .length
+                      }
+                      )
                     </span>
                   </div>
                 </li>
@@ -241,10 +250,12 @@ export default function ProductList() {
                   const variant = selectedVariants[product.id];
                   const sizeList = variant?.sizes || [];
                   const selectedSize = selectedSizes[product.id];
-                  const price = variant?.price || product.basePrice;
 
                   return (
-                    <div key={product.id} className="col-md-6 col-lg-4 col-xl-4">
+                    <div
+                      key={product.id}
+                      className="col-md-6 col-lg-4 col-xl-4"
+                    >
                       <div className="border rounded p-3 bg-light h-100">
                         {/* Image */}
                         <Link to={`/products/${product.id}`}>
@@ -318,25 +329,28 @@ export default function ProductList() {
                           </div>
                         )}
 
-                      <div className="d-flex justify-content-between align-items-center">
-
-                      {/* Giá gốc + giá sale */}
-                      <div>
-                        <div className="text-muted text-decoration-line-through small">
-                          {product.basePrice.toLocaleString()}₫
-                        </div>
-                        <div className="fw-bold text-danger">
-                          {(product.basePrice * (1 - product.discount / 100)).toLocaleString()}₫
+                        <div className="d-flex justify-content-between align-items-center">
+                          {/* Giá gốc + giá sale */}
+                          <div>
+                            <div className="text-muted text-decoration-line-through small">
+                              {product.basePrice.toLocaleString()}₫
+                            </div>
+                            <div className="fw-bold text-danger">
+                              {(
+                                product.basePrice *
+                                (1 - product.discount / 100)
+                              ).toLocaleString()}
+                              ₫
+                            </div>
                           </div>
-                        </div>
 
-                        <button
-                          className="btn border border-secondary rounded-pill px-3"
-                          onClick={() => handleAddToCart(product)}
-                        >
-                          <i className="fa fa-shopping-bag me-2 text-primary"></i>
-                          Mua
-                        </button>
+                          <button
+                            className="btn border border-secondary rounded-pill px-3"
+                            onClick={() => handleAddToCart(product)}
+                          >
+                            <i className="fa fa-shopping-bag me-2 text-primary"></i>
+                            Mua
+                          </button>
                         </div>
                       </div>
                     </div>
