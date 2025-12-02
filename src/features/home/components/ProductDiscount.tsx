@@ -145,6 +145,7 @@ export default function DiscountedProductCarousel() {
         sizeId: selectedSize.id,
         price: finalPrice,
         quantity: 1,
+        discount: selectedVariant.discount || product.discount || 0,
         maxStock: selectedSize.stock ?? 999,
         availableColors: product.variants?.map((v: any) => ({
           id: v.id,

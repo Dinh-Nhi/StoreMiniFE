@@ -150,6 +150,7 @@ export default function ProductSection() {
         size: selectedSize.size,
         sizeId: selectedSize.id,
         price: selectedVariant.price || product.basePrice,
+        discount: selectedVariant.discount || product.discount || 0,
         quantity: 1,
         maxStock: selectedSize.stock,
         availableColors: product.variants?.map((v: any) => ({
