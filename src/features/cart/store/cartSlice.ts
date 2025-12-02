@@ -10,6 +10,7 @@ export interface CartItem {
   size: string;
   sizeId: number;
   price: number;
+  discount?: number;
   quantity: number;
   maxStock: number;
   availableColors: {

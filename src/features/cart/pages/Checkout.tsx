@@ -64,8 +64,20 @@ export default function Checkout() {
     setImages(imageMap);
   }, [items]);
 
-  const total = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
+    const getFinalPrice = (item: any) => {
+      if (item.discount && item.discount > 0) {
+        return item.price - (item.price * item.discount) / 100;
+      }
+      return item.price;
+    };
 
+
+    const total = items.reduce(
+      (acc, it) => acc + getFinalPrice(it) * it.quantity,
+      0
+    );
+
+ 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -127,7 +139,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="container py-5" style={{ maxWidth: "900px" }}>
+    <div className="container" style={{ maxWidth: "900px", paddingTop: "100px" }}>
       <h2 className="fw-bold text-primary mb-4">Thanh toán</h2>
 
       <form onSubmit={handleSubmit} className="row g-4">
@@ -245,11 +257,11 @@ export default function Checkout() {
                         Màu: {it.color || "—"} | Size: {it.size || "—"}
                       </small>
                       <div>
-                        SL: {it.quantity} × {it.price.toLocaleString()}₫
+                          SL: {it.quantity} × {getFinalPrice(it).toLocaleString()}₫
                       </div>
                     </div>
                     <div className="fw-bold text-end" style={{ minWidth: 80 }}>
-                      {(it.price * it.quantity).toLocaleString()}₫
+                      {(getFinalPrice(it) * it.quantity).toLocaleString()}₫
                     </div>
                   </div>
                 );
